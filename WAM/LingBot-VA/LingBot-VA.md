@@ -49,7 +49,7 @@ LingBot-VA 采用了一个**基于 Flow Matching 的自回归扩散 Transformer 
 
 **A. 训练流程**
 
-训练的目标是将视频预测和逆动力学动作预测统一在一个自回归的 Next-token 预测目标下 。  
+训练的目标是将视频预测和逆动力学动作预测统一在一个自回归 video-action 序列中。  
 
 1. **构建输入**：从数据集中采样**交错的视频-动作长序列** $[z_t, a_{t,1}, a_{t,2}, ..., a_{t,\tau}, z_{t+1}, ...]$，并使用带有掩码的因果注意力。
 
@@ -60,6 +60,8 @@ LingBot-VA 采用了一个**基于 Flow Matching 的自回归扩散 Transformer 
    \mathcal{L} = \mathcal{L}_{dyn} + \lambda \mathcal{L}_{inv}
    $$
    后训练阶段还会额外引入一个基于正向动力学的对齐损失 $\mathcal{L}_{fdm}$ 。  
+
+> LingBot-VA 虽然在控制逻辑上可以解释为“先预测未来视觉状态，再由状态转移推断动作”，但它并不是把 video/world prediction 与 action decoding 视为两个完全独立的模块分别训练。相反，它将 video tokens 和 action tokens 交错组织到同一个自回归 video-action 序列中，并在连续 latent space 中通过 autoregressive diffusion / flow matching 框架对世界预测和动作生成进行联合建模。因此，从架构耦合和联合优化的角度看，LingBot-VA 更适合归类为 Joint WAM。
 
 **B. 闭环推理流程（Algorithm2）**
 
