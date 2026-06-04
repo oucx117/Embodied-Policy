@@ -167,7 +167,7 @@
     <img src="./WAM/LingBot-VA/images/model.png" alt="LingBot-VA architecture" width="720">
   </p>
 
-- **[FastWAM](./WAM/Fast-WAM/Fast-WAM.md)**：在训练阶段保留了视频协同训练，但在测试阶段跳过了未来画面的预测；通过对比实验证明，WAM 的优势主要来自于视频协同训练目标本身，而推理时的未来生成并非关键；运行延迟仅为 190 毫秒，比现有的“先想象后执行”的 WAM 快 4 倍以上。
+- **[FastWAM](./WAM/Fast-WAM/Fast-WAM.md)**：在训练阶段保留了视频协同训练，但在测试阶段**跳过了未来画面的预测**；通过对比实验证明，WAM 的优势主要来自于视频协同训练目标本身，而**推理时的未来生成并非关键**；运行延迟仅为 **190 毫秒**，比现有的“先想象后执行”的 WAM 快 **4 倍**以上。
 
   <p align="center">
     <img src="./WAM/Fast-WAM/images/model.png" alt="FastWAM architecture" width="500">
