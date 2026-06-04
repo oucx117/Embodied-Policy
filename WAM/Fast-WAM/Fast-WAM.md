@@ -17,7 +17,9 @@
 
 ### 二. 模型结构
 
-Fast-WAM 采用了具有共享注意力的混合 Transformer (Mixture-of-Transformer, MoT) 架构，由一个视频 DiT 和一个动作专家 DiT 组成 。  
+Fast-WAM 采用具有共享注意力的混合 Transformer (Mixture-of-Transformer, MoT) 架构，由一个视频 DiT 和一个动作专家 DiT 组成。  
+
+![model](/Users/oucunxu/study/实习面试/八股/具身经典工作/WAM/Fast-WAM/images/model.png)
 
 **A. 整体架构**
 
