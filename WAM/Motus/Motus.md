@@ -95,142 +95,129 @@
 
 **算法流程**
 ```text
-\begin{array}{ll}
-\hline
-\textbf{Algorithm 1 } \text{Training} \\
-\hline
-\begin{array}{rl}
-1: & \textbf{repeat} \\
-2: & \quad o_{t:t+k}^0, a_{t+1:t+k}^0, \ell \sim D_{\text{expert}} \\
-3: & \quad \tau_o, \tau_a \sim \text{Uniform}(\{1, 2, \dots, T_\tau\}) \\
-4: & \quad \epsilon_o, \epsilon_a \sim \mathcal{N}(\mathbf{0}, \mathbf{I}) \\
-5: & \quad o_{t+1:t+k}^{\tau_o} = (1 - \tau_o)o_{t+1:t+k}^0 + \tau_o\epsilon_o \\
-6: & \quad a_{t+1:t+k}^{\tau_a} = (1 - \tau_a)a_{t+1:t+k}^0 + \tau_a\epsilon_a \\
-7: & \quad v_o^\theta, v_a^\theta = \text{Model}_\theta(o_t^0, o_{t+1:t+k}^{\tau_o}, a_{t+1:t+k}^{\tau_a}, \tau_o, \tau_a, \ell) \\
-8: & \quad l_{\text{action}}^\theta = \|v_a^\theta - (\epsilon_a - a_{t+1:t+k}^0)\|_2^2 \\
-9: & \quad l_{\text{obs}}^\theta = \|v_o^\theta - (\epsilon_o - o_{t+1:t+k}^0)\|_2^2 \\
-10: & \quad l^\theta = l_{\text{action}}^\theta + l_{\text{obs}}^\theta \\
-11: & \quad \theta \leftarrow \theta - \eta \nabla_\theta l^\theta \\
-12: & \textbf{until } \text{converged}
-\end{array} \\
-\hline
-\end{array}
+
+Algorithm 1  Training  
+
+1: repeat  
+2: o_t:t+k^0, a_t+1:t+k^0, ℓ ~ D_expert  
+3: τ_o, τ_a ~ Uniform({1, 2, …, T_τ})  
+4: ε_o, ε_a ~ N(0, I)  
+5: o_t+1:t+k^τ_o = (1 - τ_o)o_t+1:t+k^0 + τ_oε_o  
+6: a_t+1:t+k^τ_a = (1 - τ_a)a_t+1:t+k^0 + τ_aε_a  
+7: v_o^θ, v_a^θ = Model_θ(o_t^0, o_t+1:t+k^τ_o, a_t+1:t+k^τ_a, τ_o, τ_a, ℓ)  
+8: l_action^θ = |v_a^θ - (ε_a - a_t+1:t+k^0)|_2^2  
+9: l_obs^θ = |v_o^θ - (ε_o - o_t+1:t+k^0)|_2^2  
+10: l^θ = l_action^θ + l_obs^θ  
+11: θ ← θ - η ∇_θ l^θ  
+12: until converged
+
+
 ```
 
 #### B. 灵活的多模式推理流程
 
 Motus 构建了类似 UniDiffuser 的调度器，推理时通过改变视频和动作的初始噪声状态和去噪时间步，无缝切换五种工作模式 ：  
 
-1. **视频生成模式 (VGM)**：`p(\mathbf{o}_{t+1:t+k} \mid \mathbf{o}_t, \ell)`
+1. **视频生成模式 (VGM)**：`p(o_t+1:t+k | o_t, ℓ)`
 
    给定当前观测和指令，动作维度保持**纯噪声**状态，逐步对视频维度进行去噪，预测**未来的视觉画面**。
    ```text
-   \begin{array}{ll}
-   \hline
-   \textbf{Algorithm 2 } \text{VGM} \\
-   \hline
-   \textbf{Require:} \quad o_t^0, \ell, \theta \\
-   \begin{array}{rl}
-   1: & \epsilon_o, \epsilon_a \sim \mathcal{N}(\mathbf{0}, \mathbf{I}) \\
-   2: & o_{t+1:t+k}^{T_\tau} \leftarrow \epsilon_o \\
-   3: & a_{t+1:t+k}^{T_\tau} \leftarrow \epsilon_a \\
-   4: & \textbf{for } \tau = T_\tau \dots 1 \textbf{ do} \\
-   5: & \quad v_o, v_a = \text{Model}_\theta(o_t^0, o_{t+1:t+k}^\tau, a_{t+1:t+k}^{T_\tau}, \tau, T_\tau, \ell) \\
-   6: & \quad o_{t+1:t+k}^{\tau-1} = o_{t+1:t+k}^\tau + v_o d\tau \\
-   7: & \textbf{end for} \\
-   8: & \textbf{return } o_{t+1:t+k}^0
-   \end{array} \\
-   \hline
-   \end{array}
+
+   Algorithm 2  VGM  
+   
+   Require: o_t^0, ℓ, θ  
+   
+   1: ε_o, ε_a ~ N(0, I)  
+   2: o_t+1:t+k^T_τ ← ε_o  
+   3: a_t+1:t+k^T_τ ← ε_a  
+   4: for τ = T_τ … 1  do  
+   5: v_o, v_a = Model_θ(o_t^0, o_t+1:t+k^τ, a_t+1:t+k^T_τ, τ, T_τ, ℓ)  
+   6: o_t+1:t+k^τ-1 = o_t+1:t+k^τ + v_o dτ  
+   7: end for 
+   8: return o_t+1:t+k^0
+
+   
    ```
 
-2. **世界模型模式 (World Model)**：`p(\mathbf{o}_{t+1:t+k} \mid \mathbf{o}_t, \mathbf{a}_{t+1:t+k})`
+2. **世界模型模式 (World Model)**：`p(o_t+1:t+k | o_t, a_t+1:t+k)`
 
    给定当前观测和一段**干净**的动作指令序列，通过去噪推演预测出**执行该动作后的未来视觉观测结果**。
    ```text
-   \begin{array}{ll}
-   \hline
-   \textbf{Algorithm 3 } \text{World Model} \\
-   \hline
-   \textbf{Require:} \quad o_t^0, a_{t+1:t+k}^0, \ell, \theta \\
-   \begin{array}{rl}
-   1: & \epsilon_o \sim \mathcal{N}(\mathbf{0}, \mathbf{I}) \\
-   2: & o_{t+1:t+k}^{T_\tau} \leftarrow \epsilon_o \\
-   3: & \textbf{for } \tau = T_\tau \dots 1 \textbf{ do} \\
-   4: & \quad v_o, v_a = \text{Model}_\theta(o_t^0, o_{t+1:t+k}^\tau, a_{t+1:t+k}^0, \tau, 0, \ell) \\
-   5: & \quad o_{t+1:t+k}^{\tau-1} = o_{t+1:t+k}^\tau + v_o d\tau \\
-   6: & \textbf{end for} \\
-   7: & \textbf{return } o_{t+1:t+k}^0
-   \end{array} \\
-   \hline
-   \end{array}
+
+   Algorithm 3  World Model  
+   
+   Require: o_t^0, a_t+1:t+k^0, ℓ, θ  
+   
+   1: ε_o ~ N(0, I)  
+   2: o_t+1:t+k^T_τ ← ε_o  
+   3: for τ = T_τ … 1  do  
+   4: v_o, v_a = Model_θ(o_t^0, o_t+1:t+k^τ, a_t+1:t+k^0, τ, 0, ℓ)  
+   5: o_t+1:t+k^τ-1 = o_t+1:t+k^τ + v_o dτ  
+   6: end for 
+   7: return o_t+1:t+k^0
+
+   
    ```
 
-3. **逆动力学模型模式 (IDM)**：`p(\mathbf{a}_{t+1:t+k} \mid \mathbf{o}_{t:t+k})`
+3. **逆动力学模型模式 (IDM)**：`p(a_t+1:t+k | o_t:t+k)`
 
    给定一段**干净**的视频观测序列，将动作维度初始化为纯噪声并逐步去噪，推断出**产生该视觉变化所需的物理动作**。
    ```text
-   \begin{array}{ll}
-   \hline
-   \textbf{Algorithm 4 } \text{IDM} \\
-   \hline
-   \textbf{Require:} \quad o_{t:t+k}^0, \ell, \theta \\
-   \begin{array}{rl}
-   1: & \epsilon_a \sim \mathcal{N}(\mathbf{0}, \mathbf{I}) \\
-   2: & a_{t+1:t+k}^{T_\tau} \leftarrow \epsilon_a \\
-   3: & \textbf{for } \tau = T_\tau \dots 1 \textbf{ do} \\
-   4: & \quad v_o, v_a = \text{Model}_\theta(o_{t:t+k}^0, a_{t+1:t+k}^\tau, 0, \tau, \ell) \\
-   5: & \quad a_{t+1:t+k}^{\tau-1} = a_{t+1:t+k}^\tau + v_a d\tau \\
-   6: & \textbf{end for} \\
-   7: & \textbf{return } a_{t+1:t+k}^0
-   \end{array} \\
-   \hline
-   \end{array}
+
+   Algorithm 4  IDM  
+   
+   Require: o_t:t+k^0, ℓ, θ  
+   
+   1: ε_a ~ N(0, I)  
+   2: a_t+1:t+k^T_τ ← ε_a  
+   3: for τ = T_τ … 1  do  
+   4: v_o, v_a = Model_θ(o_t:t+k^0, a_t+1:t+k^τ, 0, τ, ℓ)  
+   5: a_t+1:t+k^τ-1 = a_t+1:t+k^τ + v_a dτ  
+   6: end for 
+   7: return a_t+1:t+k^0
+
+   
    ```
 
-4. **VLA 控制模式**：`p(\mathbf{a}_{t+1:t+k} \mid \mathbf{o}_t, \ell)`
+4. **VLA 控制模式**：`p(a_t+1:t+k | o_t, ℓ)`
 
    给定单帧观测和语言指令，视频维度保持**纯噪声**状态，模型专注于对动作维度去噪，直接输出**控制策略**。  
    ```text
-   \begin{array}{ll}
-   \hline
-   \textbf{Algorithm 5 } \text{VLA} \\
-   \hline
-   \textbf{Require:} \quad o_t^0, \ell, \theta \\
-   \begin{array}{rl}
-   1: & \epsilon_o, \epsilon_a \sim \mathcal{N}(\mathbf{0}, \mathbf{I}) \\
-   2: & o_{t+1:t+k}^{T_\tau} \leftarrow \epsilon_o \\
-   3: & a_{t+1:t+k}^{T_\tau} \leftarrow \epsilon_a \\
-   4: & \textbf{for } \tau = T_\tau \dots 1 \textbf{ do} \\
-   5: & \quad v_o, v_a = \text{Model}_\theta(o_t^0, o_{t+1:t+k}^{T_\tau}, a_{t+1:t+k}^\tau, T_\tau, \tau, \ell) \\
-   6: & \quad a_{t+1:t+k}^{\tau-1} = a_{t+1:t+k}^\tau + v_a d\tau \\
-   7: & \textbf{end for} \\
-   8: & \textbf{return } a_{t+1:t+k}^0
-   \end{array} \\
-   \hline
-   \end{array}
+
+   Algorithm 5  VLA  
+   
+   Require: o_t^0, ℓ, θ  
+   
+   1: ε_o, ε_a ~ N(0, I)  
+   2: o_t+1:t+k^T_τ ← ε_o  
+   3: a_t+1:t+k^T_τ ← ε_a  
+   4: for τ = T_τ … 1  do  
+   5: v_o, v_a = Model_θ(o_t^0, o_t+1:t+k^T_τ, a_t+1:t+k^τ, T_τ, τ, ℓ)  
+   6: a_t+1:t+k^τ-1 = a_t+1:t+k^τ + v_a dτ  
+   7: end for 
+   8: return a_t+1:t+k^0
+
+   
    ```
 
-5. **视频-动作联合预测模式**：`p(\mathbf{o}_{t+1:t+k}, \mathbf{a}_{t+1:t+k} \mid \mathbf{o}_t, \ell)`
+5. **视频-动作联合预测模式**：`p(o_t+1:t+k, a_t+1:t+k | o_t, ℓ)`
 
    给定观测和指令，从高斯噪声中同时**联合去噪**，输出**未来的视频帧序列和精确的动作轨迹块** 。  
    ```text
-   \begin{array}{ll}
-   \hline
-   \textbf{Algorithm 6 } \text{Video-Action Joint Prediction Model} \\
-   \hline
-   \textbf{Require:} \quad o_t^0, \ell, \theta \\
-   \begin{array}{rl}
-   1: & \epsilon_o, \epsilon_a \sim \mathcal{N}(\mathbf{0}, \mathbf{I}) \\
-   2: & o_{t+1:t+k}^{T_\tau} \leftarrow \epsilon_o \\
-   3: & a_{t+1:t+k}^{T_\tau} \leftarrow \epsilon_a \\
-   4: & \textbf{for } \tau = T_\tau \dots 1 \textbf{ do} \\
-   5: & \quad v_o, v_a = \text{Model}_\theta(o_t^0, o_{t+1:t+k}^\tau, a_{t+1:t+k}^\tau, \tau, \tau, \ell) \\
-   6: & \quad o_{t+1:t+k}^{\tau-1} = o_{t+1:t+k}^\tau + v_o d\tau \\
-   7: & \quad a_{t+1:t+k}^{\tau-1} = a_{t+1:t+k}^\tau + v_a d\tau \\
-   8: & \textbf{end for} \\
-   9: & \textbf{return } o_{t+1:t+k}^0, a_{t+1:t+k}^0
-   \end{array} \\
-   \hline
-   \end{array}
+
+   Algorithm 6  Video-Action Joint Prediction Model  
+   
+   Require: o_t^0, ℓ, θ  
+   
+   1: ε_o, ε_a ~ N(0, I)  
+   2: o_t+1:t+k^T_τ ← ε_o  
+   3: a_t+1:t+k^T_τ ← ε_a  
+   4: for τ = T_τ … 1  do  
+   5: v_o, v_a = Model_θ(o_t^0, o_t+1:t+k^τ, a_t+1:t+k^τ, τ, τ, ℓ)  
+   6: o_t+1:t+k^τ-1 = o_t+1:t+k^τ + v_o dτ  
+   7: a_t+1:t+k^τ-1 = a_t+1:t+k^τ + v_a dτ  
+   8: end for 
+   9: return o_t+1:t+k^0, a_t+1:t+k^0
+
+   
    ```
