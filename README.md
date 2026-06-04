@@ -1,6 +1,6 @@
 # Embodied Policy 经典工作
 
-本仓库用于整理具身智能策略学习中的经典工作，重点关注 VA、VLA 和 WAM 三类 Embodied Policy 建模范式。
+本仓库用于整理关于具身智能策略的经典工作，重点关注 VA、VLA 和 WAM 三类 Embodied Policy 建模范式。
 
 ## 目录
 
