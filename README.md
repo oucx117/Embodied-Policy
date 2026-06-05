@@ -153,7 +153,9 @@
 
 ### 代表工作（关注 Joint WAM 中的 Diffusion-based Generation）
 
-#### Multi-stream（多个分支分别处理 World 和 Action）
+#### Multi-stream
+
+> 多个分支分别处理 Video 和 Action
 
 - **[Motus](./WAM/Motus/Motus.md)**：基于 MoT 架构，通过共享注意力机制集成了**三大预训练专家**（视频生成器、动作专家和视觉语言理解专家），**能够在五种不同的推理模式（WM, VLA, IDM, VGM, WAM）之间自适应切换**。利用**光流**将视觉动态编码为像素级的“增量动作”，使模型能够**利用无标签的视频进行大规模的动作预训练**，并统一了不同机器人的动作模式。
 
@@ -173,7 +175,9 @@
     <img src="./WAM/Fast-WAM/images/model.png" alt="FastWAM architecture" width="500">
   </p>
 
-#### Unified-stream（一个主干同时处理 World 和 Action）
+#### Unified-stream
+
+> 一个主干同时处理 Video 和 Action
 
 - **[CosmosPolicy](./WAM/CosmosPolicy/CosmosPolicy.md)**：基于预训练视频模型 Cosmos-Predict2-2B 构建，**没有任何架构修改，仅通过在机器人演示数据上进行单阶段微调**，利用原生的扩散学习目标来联合建模所有模态；将机器人的本体状态、动作块以及未来状态的预期价值**伪装并编码为潜空间中的“帧”**，无缝插入到视频模型原有的潜在扩散序列；通过收集策略部署过程中的回放数据，Cosmos Policy 能够**从经验中学习**，优化其世界模型和**价值函数**。在推理时使用 **Best-of-N 采样**规划，通过生成动作候选、想象未来状态并**按预期价值排序**，显著提升了复杂任务的成功率。
 
