@@ -52,12 +52,14 @@
   <p align="center">
     <img src="./VA/ACT/images/model.png" alt="ACT architecture" width="720">
   </p>
+  <p align="center"><sub>GitHub: <a href="https://github.com/tonyzhaozh/act">tonyzhaozh/act</a></sub></p>
 
 - **[Diffusion Policy](./VA/Diffusion_policy/Diffusion_policy.md)**：借鉴视觉生成领域的 Diffusion 机制，从纯高斯噪声开始，在视觉观测的“条件引导”下，通过**多步迭代去噪**，生成一段连续的机器人动作序列。Diffusion 机制天生具备**强大的多模态生成能力和极其稳定的训练过程**，有利于解决人类示教数据存在的多模态性（例如面对同一障碍物，人类有时从左边绕，有时从右边绕）。
 
   <p align="center">
     <img src="./VA/Diffusion_policy/images/model.png" alt="Diffusion Policy architecture" width="720">
   </p>
+  <p align="center"><sub>GitHub: <a href="https://github.com/real-stanford/diffusion_policy">real-stanford/diffusion_policy</a></sub></p>
 
 <a id="vla"></a>
 
@@ -82,6 +84,7 @@
   <p align="center">
     <img src="./VLA/OpenVLA/images/model.png" alt="OpenVLA architecture" width="720">
   </p>
+  <p align="center"><sub>GitHub: <a href="https://github.com/openvla/openvla">openvla/openvla</a></sub></p>
 
 #### Diffusion / Flow Matching based VLA
 
@@ -92,12 +95,14 @@
   <p align="center">
     <img src="./VLA/π系列/images/pi0_model.png" alt="pi0 architecture" width="720">
   </p>
+  <p align="center"><sub>GitHub: <a href="https://github.com/Physical-Intelligence/openpi">Physical-Intelligence/openpi</a></sub></p>
 
 - **[RDT](./VLA/RDT/RDT.md)**：面向双臂 manipulation，提出**统一动作空间**（128 维向量空间，预先划分好了各种可能用到的专属物理量槽位），使得模型能够打破物理形态壁垒，进行**跨机器人实体预训练**，从而学习可广泛迁移的物理控制先验知识。
 
   <p align="center">
     <img src="./VLA/RDT/images/model.png" alt="RDT architecture" width="720">
   </p>
+  <p align="center"><sub>GitHub: <a href="https://github.com/thu-ml/RoboticsDiffusionTransformer">thu-ml/RoboticsDiffusionTransformer</a></sub></p>
 
 #### Heterogeneous-Data Co-trained VLA
 
@@ -108,12 +113,14 @@
   <p align="center">
     <img src="./VLA/π系列/images/pi05_model.png" alt="pi0.5 architecture" width="720">
   </p>
+  <p align="center"><sub>GitHub: <a href="https://github.com/Physical-Intelligence/openpi">Physical-Intelligence/openpi</a></sub></p>
 
 - **[Qwen-VLA](./VLA/Qwen-VLA/Qwen-VLA.md)**：构建**大规模异构联合预训练数据混合集**，涵盖多机器人操作轨迹、人类第一视角演示、仿真合成、导航及通用 VLM 数据，通过**四阶段渐进式训练 pipeline**（action-only 预训练 → 多模态持续预训练 → SFT → RL），将 manipulation、navigation、人类第一视角轨迹和 trajectory-centric 任务统一到一个动作-轨迹预测框架中。
 
   <p align="center">
     <img src="./VLA/Qwen-VLA/images/model.png" alt="Qwen-VLA architecture" width="720">
   </p>
+  <p align="center"><sub>GitHub: <a href="https://github.com/QwenLM/Qwen-VLA">QwenLM/Qwen-VLA</a></sub></p>
 
 #### RL-Enhanced VLA
 
@@ -144,6 +151,7 @@
   <p align="center">
     <img src="./VLA/GR00T系列/images/model.png" alt="GR00T N1 architecture" width="720">
   </p>
+  <p align="center"><sub>GitHub: <a href="https://github.com/NVIDIA/Isaac-GR00T">NVIDIA/Isaac-GR00T</a></sub></p>
 
 <a id="wam"></a>
 
@@ -162,18 +170,21 @@
   <p align="center">
     <img src="./WAM/Motus/images/model.png" alt="Motus architecture" width="500">
   </p>
+  <p align="center"><sub>GitHub: <a href="https://github.com/thu-ml/Motus">thu-ml/Motus</a></sub></p>
 
 - **[LingBot-VA](./WAM/LingBot-VA/LingBot-VA.md)**：基于 **Flow Matching** 框架在一个连续的潜在空间中以**自回归**的方式**交错生成**视频和动作块。**通过预测未来视觉动态再从中提取动作**，模型自然拥有了物理演化的理解能力。架构上采用共享隐空间的 MoT。推理时，采用**异步协调流水线**将动作预测与电机执行并行化，使用 **KV Cache** 缓存所有历史观测和动作，保存模型的长期记忆。
 
   <p align="center">
     <img src="./WAM/LingBot-VA/images/model.png" alt="LingBot-VA architecture" width="720">
   </p>
+  <p align="center"><sub>GitHub: <a href="https://github.com/Robbyant/lingbot-va">Robbyant/lingbot-va</a></sub></p>
 
 - **[FastWAM](./WAM/Fast-WAM/Fast-WAM.md)**：在训练阶段保留了视频协同训练，但在测试阶段**跳过了未来画面的预测**；通过对比实验证明，WAM 的优势主要来自于视频协同训练目标本身，而**推理时的未来生成并非关键**；运行延迟仅为 **190 毫秒**，比现有的“先想象后执行”的 WAM 快 **4 倍**以上。
 
   <p align="center">
     <img src="./WAM/Fast-WAM/images/model.png" alt="FastWAM architecture" width="500">
   </p>
+  <p align="center"><sub>GitHub: <a href="https://github.com/yuantianyuan01/FastWAM">yuantianyuan01/FastWAM</a></sub></p>
 
 #### Unified-stream
 
@@ -184,12 +195,14 @@
   <p align="center">
     <img src="./WAM/CosmosPolicy/images/model.png" alt="CosmosPolicy architecture" width="720">
   </p>
+  <p align="center"><sub>GitHub: <a href="https://github.com/NVlabs/cosmos-policy">NVlabs/cosmos-policy</a></sub></p>
 
 - **[DreamZero](./WAM/DreamZero/Dream-Zero.md)**：基于预训练视频扩散模型 Wan2.1-12V-14B 构建，继承了视频模型中海量的物理演化先验规律，联合生成未来的“视频画面”与“动作指令”；采用了自回归 DiT 架构，利用 **KV Cache** 与 **DREAMZERO-Flash** 技术，成功将推理速度提升了 38 倍，实现了约 **7 Hz** 的实时闭环控制。
 
   <p align="center">
     <img src="./WAM/DreamZero/images/model.png" alt="DreamZero architecture" width="720">
   </p>
+  <p align="center"><sub>GitHub: <a href="https://github.com/dreamzero0/dreamzero">dreamzero0/dreamzero</a></sub></p>
 
 <a id="notice"></a>
 
