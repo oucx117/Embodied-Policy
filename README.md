@@ -69,7 +69,11 @@
 
 ### 代表工作
 
-#### Autoregressive VLA（自回归 VLA）
+> 说明：下面的分类是从不同维度理解 VLA 的方式，并非互斥划分；同一工作可能同时出现在多个子类中。
+
+#### By Action Modeling Paradigm
+
+##### Autoregressive VLA
 
 > 早期的 VLA 通常继承传统大模型的**自回归生成机制**，代表工作如 RT-2、OpenVLA 等。这类工作的核心思想是**把机器人动作离散化（通常是分成 256 个 bin）为类似语言 token 的形式，让 VLM 可以像生成文本一样生成动作**。
 
@@ -86,7 +90,7 @@
   </p>
   <p align="center"><sub>GitHub: <a href="https://github.com/openvla/openvla">openvla/openvla</a></sub></p>
 
-#### Diffusion / Flow Matching based VLA
+##### Diffusion / Flow-Matching VLA
 
 > 目前大部分的 VLA 模型通常采用**基于 Diffusion 或 Flow Matching 机制**来输出动作，代表工作如 π0、RDT 等。相比于自回归方式，这类模型能够**并行**输出**连续**动作，有助于提高动作执行频率和精度，使得能够完成高度灵巧的任务。
 
@@ -104,7 +108,20 @@
   </p>
   <p align="center"><sub>GitHub: <a href="https://github.com/thu-ml/RoboticsDiffusionTransformer">thu-ml/RoboticsDiffusionTransformer</a></sub></p>
 
-#### Heterogeneous-Data Co-trained VLA
+#### By Data Utilization Strategy
+
+##### Robot-Data-Centric VLA
+
+> 这类 VLA 主要围绕**机器人动作数据**进行训练或微调，重点在于把预训练 VLM 的语义能力迁移到机器人控制中，而不是显式依赖大规模异构数据混训。
+
+- **[OpenVLA](./VLA/OpenVLA/OpenVLA.md)**：同 RT-2 一样直接继承强大的预训练 VLM（Prismatic-7B）训练得到。架构上采用**融合视觉编码器**，由 SigLIP 和 DINOv2 分别提取粗粒度和细粒度信息。模型完全**开源**，解决了此前 VLA 多为闭源、难以复现的问题。
+
+  <p align="center">
+    <img src="./VLA/OpenVLA/images/model.png" alt="OpenVLA architecture" width="720">
+  </p>
+  <p align="center"><sub>GitHub: <a href="https://github.com/openvla/openvla">openvla/openvla</a></sub></p>
+
+##### Heterogeneous-Data Co-trained VLA
 
 > 核心思想是**通过大规模异构数据联合训练提升 VLA 的泛化能力**，代表工作如 π0.5、Qwen-VLA 等。相比只在机器人遥操作数据上训练，这类方法会混合使用跨机器人数据、真实机器人数据、仿真数据、人类视频、通用视觉语言数据等，使模型同时获得语义理解、任务分解、跨实体迁移和底层动作生成能力。
 
@@ -122,27 +139,19 @@
   </p>
   <p align="center"><sub>GitHub: <a href="https://github.com/QwenLM/Qwen-VLA">QwenLM/Qwen-VLA</a></sub></p>
 
-#### RL-Enhanced VLA
+#### By Model Architecture
 
-> 核心思想是在模仿学习得到的 VLA 基础上，引入**强化学习**或**自主试错机制**进一步提升性能，代表工作如 π0.6。
+##### End-to-End Single-System VLA
 
-- **[π0.6](./VLA/π系列/π06.md)**：引入了**强化学习**的思想，故意让模型去现实世界碰壁，并在快要失败时**让人类接管纠正**，为模型提供了极其宝贵的“**逆境恢复**”数据，从而提升鲁棒性、任务成功率和对新环境的适应能力。模型架构上，在 π0.5 基础上引入**价值网络**，学会自己评估状态好坏、计算优势值，并通过**优势加权流匹配**（AWFM）来迭代提升模型策略。
+> 这类 VLA 通常采用**端到端**映射方式，直接从视觉与语言输入生成机器人动作，系统内部不显式拆分为独立的高层规划器和低层控制器。
 
-  <p align="center">
-    <img src="./VLA/π系列/images/pi06_model.png" alt="pi0.6 architecture" width="500">
-  </p>
-
-#### World-Model-Guided VLA
-
-> 核心思想是**用世界模型预测未来状态或子目标，再用这些预测结果指导 VLA 生成动作**，代表工作如 π0.7。
-
-- **[π0.7](./VLA/π系列/π07.md)**：引入**多模态提示词**，不仅告诉模型“要做什么（What）”，还包含**关于策略和任务表现的元数据以及子目标图像**，告诉模型“怎么做（How）”。这种设计解决了混合次优数据带来的模糊性，使得模型不仅能吸收庞杂且低质量的数据而不受损，反而能够从中学习并展现出强大的开箱即用能力、跨实体泛化能力和零样本组合泛化能力。
+- **[RT-2](./VLA/RT系列/RT2.md)**：直接在强大的预训练 VLM（PaLI-X 5B/55B 和 PaLM-E 12B）上进行**联合微调**（机器人数据 + 原始的网络图文数据），将 VLM 在互联网规模数据上学到的丰富语义知识和推理能力迁移到机器人的底层控制中，得到端到端的 VLA 模型。
 
   <p align="center">
-    <img src="./VLA/π系列/images/pi07_model.png" alt="pi0.7 architecture" width="720">
+    <img src="./VLA/RT系列/images/model.png" alt="RT-2 architecture" width="720">
   </p>
 
-#### Dual-System VLA
+##### Dual-System VLA
 
 > 核心思想是**将高层语义推理与低层连续控制拆成快慢两个系统**，代表工作如 GR00T N1。慢系统通常由 VLM / LLM 负责理解图像、语言指令、任务语义和高层计划；快系统通常由 Diffusion Transformer 或 Action Expert 负责实时生成连续动作。
 
@@ -152,6 +161,46 @@
     <img src="./VLA/GR00T系列/images/model.png" alt="GR00T N1 architecture" width="720">
   </p>
   <p align="center"><sub>GitHub: <a href="https://github.com/NVIDIA/Isaac-GR00T">NVIDIA/Isaac-GR00T</a></sub></p>
+
+- **[HAMSTER](./VLA/HAMSTER/HAMSTER.md)**：将大规模 VLM 的**泛化优势**与小型策略模型的**执行效率和鲁棒性**相结合。**解耦高级规划与低级控制**，不让 VLM 直接预测动作，而是预测一个作为中间表示的 **2D 路径**，2D 路径之后输入给下游策略，指导其输出动作。
+
+  <p align="center">
+    <img src="./VLA/HAMSTER/images/model.png" alt="HAMSTER architecture" width="720">
+  </p>
+  <p align="center"><sub>GitHub: <a href="https://github.com/liyi14/HAMSTER_beta">liyi14/HAMSTER_beta</a></sub></p>
+
+##### World-Model-Guided VLA
+
+> 核心思想是**用世界模型预测未来状态或子目标，再用这些预测结果指导 VLA 生成动作**，代表工作如 π0.7。
+
+- **[π0.7](./VLA/π系列/π07.md)**：引入**多模态提示词**，不仅告诉模型“要做什么（What）”，还包含**关于策略和任务表现的元数据以及子目标图像**，告诉模型“怎么做（How）”。这种设计解决了混合次优数据带来的模糊性，使得模型不仅能吸收庞杂且低质量的数据而不受损，反而能够从中学习并展现出强大的开箱即用能力、跨实体泛化能力和零样本组合泛化能力。
+
+  <p align="center">
+    <img src="./VLA/π系列/images/pi07_model.png" alt="pi0.7 architecture" width="720">
+  </p>
+
+#### By Training Paradigm
+
+##### Imitation-Learning-Centric VLA
+
+> 这类 VLA 主要通过**模仿专家轨迹**、**行为克隆**、**监督学习**学习动作分布，核心目标是从示教数据中拟合稳定可靠的机器人策略。
+
+- **[π0](./VLA/π系列/π0.md)**：MoT 架构（预训练 VLM + **Flow Matching Action Expert**），使用预训练的 VLM 提取视觉和语言特征作为 Condition，然后通过 **Flow Matching** 生成连续动作，极大提升了机器人动作频率（50 Hz）和精度，使得能够完成高度灵巧的任务。
+
+  <p align="center">
+    <img src="./VLA/π系列/images/pi0_model.png" alt="pi0 architecture" width="720">
+  </p>
+  <p align="center"><sub>GitHub: <a href="https://github.com/Physical-Intelligence/openpi">Physical-Intelligence/openpi</a></sub></p>
+
+##### Reinforcement-Learning-Enhanced VLA
+
+> 核心思想是在模仿学习得到的 VLA 基础上，引入**强化学习**或**自主试错机制**进一步提升性能，代表工作如 π0.6。
+
+- **[π0.6](./VLA/π系列/π06.md)**：引入了**强化学习**的思想，故意让模型去现实世界碰壁，并在快要失败时**让人类接管纠正**，为模型提供了极其宝贵的“**逆境恢复**”数据，从而提升鲁棒性、任务成功率和对新环境的适应能力。模型架构上，在 π0.5 基础上引入**价值网络**，学会自己评估状态好坏、计算优势值，并通过**优势加权流匹配**（AWFM）来迭代提升模型策略。
+
+  <p align="center">
+    <img src="./VLA/π系列/images/pi06_model.png" alt="pi0.6 architecture" width="500">
+  </p>
 
 <a id="wam"></a>
 
