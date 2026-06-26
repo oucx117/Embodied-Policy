@@ -32,6 +32,7 @@
 ├── VA/    # Vision-Action：高频、连续、稳定的低层控制策略
 ├── VLA/   # Vision-Language-Action：结合视觉、语言和动作的通用机器人 Policy
 ├── WAM/   # World-Action Model：联合预测未来状态和动作的 Predictive Policy
+├── Method/ # 一些通用方法/模块
 └── README.md
 ```
 
