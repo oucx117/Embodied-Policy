@@ -10,9 +10,15 @@
 
 **关键矛盾**：为什么不能直接把普通 Flow Matching 的多步推理改成一步？原因是普通 Flow Matching 学到的主要是“**局部速度场**”。它擅长每次从当前 noisy action 出发，预测一小段局部速度，然后慢慢积分到真实动作；但**它并没有专门学习“从噪声一步跳到最终动作”的能力**。
 
-> **为什么普通 Flow Matching 学到的主要是“局部速度场”？**因为普通 Flow Matching 模型通常写成 $v_t = a_\theta(z_t,t|o)$，它只知道当前状态 $z_t$ 和当前时间 $t$，而没有输入目标时间 $r$，所以它并不知道“我要从 $t$ 一步跳到 $r$”，输出的自然只是当前位置附近该往哪里走。
+> **为什么普通 Flow Matching 学到的主要是“局部速度场”，而不是“区间平均速度场”？**
+>
+> * 普通 Flow Matching 通常写成 \(v_t=a_\theta(z_t,t|o)\)，模型输入的是当前 noisy action \(z_t\) 和当前时间 \(t\)，训练目标来自某个样本对 \((\epsilon,a)\) 的直线速度 \(a-\epsilon\)。虽然 \(a-\epsilon\) 本身不显式依赖 \(t\)，但 \(z_t=(1-t)a+t\epsilon\) 会随 \(t\) 变化，因此它可以作为当前位置 \(z_t,t\) 附近的瞬时速度监督。
+>
+> * 相比之下，普通 Flow Matching 没有输入目标时间 \(r\)，更关键的是监督目标 \(a-\epsilon\) 和 \(z_t\) 都不随 \(r\) 变化。因此，即使额外输入目标时间 \(r\)，如果监督目标仍然是 \(a-\epsilon\)，模型也没有明确的训练信号去学习“不同 \(r\) 对应不同跳跃区间”，很容易继续输出类似普通 FM 的瞬时速度。
+>
+> 综上，模型主要学到的是“当前位置附近该往哪里走一小步”的局部速度场，而不是“从 \(t\) 一步跳到 \(r\) 的整段平均速度”。
 
-**核心思想**：OFP 的目标是从头训练一个能够 one-step / few-step 生成动作的 flow policy。它不依赖外部预训练 teacher，而是通过 **self-distillation** 让模型自己给自己构造训练信号。具体来说，OFP 用 **self-consistency** 学习区间平均速度，用 **self-guidance** 提高 one-step 动作精度，再用 **warm-start** 缩短从初始状态到目标动作的生成距离。
+**核心思想**：OFP 的目标是从头训练一个能够 one-step / few-step 生成动作的 flow policy。它不依赖外部预训练 teacher，而是通过 **self-distillation** 让模型自己给自己构造训练信号。具体来说，OFP 将原先预测的瞬时速度改为**区间平均速度**，用 **self-consistency** 学习区间平均速度，用 **self-guidance** 提高 one-step 动作精度，再用 **warm-start** 缩短从初始状态到目标动作的生成距离。
 
 ---
 
@@ -64,7 +70,7 @@ $$
 $$
 \frac{z_r-z_t}{r-t}=a-\epsilon
 $$
-这其实仍然退化成普通 Flow Matching 的 conditional velocity。也就是说，**不管 $t,r$ 怎么选，模型学到的还是从噪声 $\epsilon$ 到真实动作 $a$ 的直线速度，而不是真正的“沿生成轨迹从 $t$ 到 $r$ 应该怎么走”**。
+这其实仍然退化成普通 Flow Matching 的 conditional velocity。
 
 OFP 因此使用 **Self-Consistency Training**。它的核心是：**在同一条生成轨迹上，从不同时间点出发，最终应该预测到一致的目标位置。**具体来说:
 
@@ -86,14 +92,12 @@ OFP 因此使用 **Self-Consistency Training**。它的核心是：**在同一�
    $$
    然后训练 student 去预测这个目标。
 
-> **为什么本文这么做？**如果直接用线性插值得到的 $z_r$，监督目标就会退化为 $a-\epsilon$，也就是从噪声 $\epsilon$ 到真实动作 $a$ 这条 OT 直线的速度。这个速度与具体区间 $[t,r]$ 无关，因此不能让模型真正学习指定时间区间上的平均速度。OFP 的做法是：让 EMA teacher 根据模型当前学到的生成轨迹，从中间点 $z_m$ 预测到目标时间 $r$ 的终点 $\hat z_r$；然后让 student 从更早的 $z_t$ 直接预测到同一个 $\hat z_r$。这样 student 学到的是沿模型当前生成轨迹，从 $t$ 到 $r$ 这一整段应该如何走，也就是该区间上的平均速度。
+> **简单理解**：OFP 让 EMA teacher 根据模型当前学到的生成轨迹，从中间点 $z_m$ 预测到目标时间 $r$ 的终点 $\hat z_r$；然后让 student 从更早的 $z_t$ 直接预测到同一个 $\hat z_r$。这样 student 学到的是沿模型当前生成轨迹，从 $t$ 到 $r$ 这一整段应该如何走，也就是该区间上的平均速度。
 
 > 关于“**从噪声 $\epsilon$ 到真实动作 $a$ 的直线速度**”和“**局部速度场**”的区别：
 >
-> * “**从 $\epsilon$ 到 $a$ 的直线速度**”是训练样本层面的监督目标，是在给定某个具体样本对 $(\epsilon,a)$ 的条件下定义的速度，它不是整个数据分布上的平均速度，也称为 conditional velocity；
-> * “**局部速度场**”是模型学完之后在推理时使用的东西，推理时，模型只看到当前 noisy action $z_t$，并不知道它原本对应哪个 $\epsilon$ 和哪个真实动作 $a$。同一个 $z_t$ 附近可能对应很多条不同的 $(\epsilon,a)$ 路径。所以模型真正需要学的是这些 conditional velocity 在数据分布下的综合效果，也称为 marginal velocity field。
->
-> 普通 Flow Matching 虽然用 $\epsilon\rightarrow a$ 的直线速度 $a-\epsilon$ 做训练监督，但模型最终学的是在当前 $z_t,t$ 附近该怎么走的局部方向。
+> - “**从 $\epsilon$ 到 $a$ 的直线速度**”是训练样本层面的监督目标，是在给定某个具体样本对 $(\epsilon,a)$ 的条件下定义的速度，它不是整个数据分布上的平均速度，也称为 conditional velocity；
+> - “**局部速度场**”是模型学完之后在推理时使用的东西。推理时，模型只看到当前 noisy action $z_t$，并不知道它原本对应哪个 $\epsilon$ 和哪个真实动作 $a$。同一个 $z_t$ 附近可能对应很多条不同的 $(\epsilon,a)$ 路径，所以模型真正需要学的是这些 conditional velocity 在数据分布下的综合效果，也称为 marginal velocity field。
 
 OFP 还使用 **Time-Contracting Schedule** 来采样 $m$：
 $$
