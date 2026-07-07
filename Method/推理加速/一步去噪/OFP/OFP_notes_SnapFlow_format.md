@@ -12,9 +12,7 @@
 
 > **为什么普通 Flow Matching 学到的主要是“局部速度场”，而不是“区间平均速度场”？**
 >
-> * 普通 Flow Matching 通常写成 \(v_t=a_\theta(z_t,t|o)\)，模型输入的是当前 noisy action \(z_t\) 和当前时间 \(t\)，训练目标来自某个样本对 \((\epsilon,a)\) 的直线速度 \(a-\epsilon\)。虽然 \(a-\epsilon\) 本身不显式依赖 \(t\)，但 \(z_t=(1-t)a+t\epsilon\) 会随 \(t\) 变化，因此它可以作为当前位置 \(z_t,t\) 附近的瞬时速度监督。
->
-> * 相比之下，普通 Flow Matching 没有输入目标时间 \(r\)，更关键的是监督目标 \(a-\epsilon\) 和 \(z_t\) 都不随 \(r\) 变化。因此，即使额外输入目标时间 \(r\)，如果监督目标仍然是 \(a-\epsilon\)，模型也没有明确的训练信号去学习“不同 \(r\) 对应不同跳跃区间”，很容易继续输出类似普通 FM 的瞬时速度。
+> 普通 Flow Matching 通常写成 \(v_t=a_\theta(z_t,t|o)\)，模型输入的是当前 noisy action \(z_t\) 和当前时间 \(t\)，训练目标来自某个样本对 \((\epsilon,a)\) 的直线速度 \(a-\epsilon\)。因为没有输入目标时间 \(r\)，没有“区间”的概念，所以没法学习“区间平均速度场”。此外，更关键的是监督目标 \(a-\epsilon\) 和 \(z_t\) 都不随 \(r\) 变化。因此，即使额外输入目标时间 \(r\)，如果监督目标仍然是 \(a-\epsilon\)，模型也没有明确的训练信号去学习“不同 \(r\) 对应不同跳跃区间”，很容易退化为 \(v_t=a_\theta(z_t,t|o)\)。相比之下，虽然 \(a-\epsilon\) 本身不显式依赖 \(t\)，但 \(z_t=(1-t)a+t\epsilon\) 会随 \(t\) 变化，因此它可以作为当前位置 \(z_t,t\) 附近的瞬时速度监督。
 >
 > 综上，模型主要学到的是“当前位置附近该往哪里走一小步”的局部速度场，而不是“从 \(t\) 一步跳到 \(r\) 的整段平均速度”。
 
@@ -30,12 +28,12 @@ OFP 的核心思路是：**不再只学习当前时间点的瞬时速度，而�
 
 普通 Flow Matching Policy 的 action head 通常可以写成：
 $$
-v_t = a_θ(z_t, t | o)
+v_t = v_θ(z_t, t | o)
 $$
 其中：
 
 - \(v_t\)：当前时间点附近的局部速度；
-- $a_θ$：Flow Matching Policy 网络；
+- $v_θ$：Flow Matching Policy 网络；
 - \(z_t\)：当前 noisy action；
 - \(t\)：当前噪声时间；
 - \(o\)：当前 observation。
@@ -43,7 +41,7 @@ $$
 OFP 改成：
 
 $$
-u_{t,r} = a_θ(z_t, t, r | o)
+u_{t,r} = v_θ(z_t, t, r | o)
 $$
 其中额外引入了一个 **目标时间 \(r\)**，表示希望模型预测**从当前时间 \(t\) 到目标时间 \(r\) 的平均速度**。
 
@@ -84,7 +82,7 @@ OFP 因此使用 **Self-Consistency Training**。它的核心是：**在同一�
    $$
    \hat{z}_r=z_m+(r-m)u_{\theta^-}(z_m,m,r|o)
    $$
-   这里的 EMA teacher 不是外部 teacher，而是当前 student 模型参数的滑动平均版本。它变化更慢，因此输出相对稳定。
+   这里的 **EMA teacher** 不是外部 teacher，而是当前 student 模型参数的滑动平均版本。它变化更慢，因此输出相对稳定。
 
 3. 有了 $\hat{z}_r$ 后，OFP 用它来构造从 $z_t$ 到 $\hat{z}_r$ 的平均速度目标：
    $$
@@ -96,8 +94,8 @@ OFP 因此使用 **Self-Consistency Training**。它的核心是：**在同一�
 
 > 关于“**从噪声 $\epsilon$ 到真实动作 $a$ 的直线速度**”和“**局部速度场**”的区别：
 >
-> - “**从 $\epsilon$ 到 $a$ 的直线速度**”是训练样本层面的监督目标，是在给定某个具体样本对 $(\epsilon,a)$ 的条件下定义的速度，它不是整个数据分布上的平均速度，也称为 conditional velocity；
-> - “**局部速度场**”是模型学完之后在推理时使用的东西。推理时，模型只看到当前 noisy action $z_t$，并不知道它原本对应哪个 $\epsilon$ 和哪个真实动作 $a$。同一个 $z_t$ 附近可能对应很多条不同的 $(\epsilon,a)$ 路径，所以模型真正需要学的是这些 conditional velocity 在数据分布下的综合效果，也称为 marginal velocity field。
+> - “**从 $\epsilon$ 到 $a$ 的直线速度**”是训练样本层面的监督目标，是在给定**某个具体样本对** $(\epsilon,a)$ 的条件下定义的速度，它不是整个数据分布上的平均速度，也称为 conditional velocity；
+> - “**局部速度场**”是模型学完之后在推理时使用的东西。推理时，模型只看到当前 noisy action $z_t$，并不知道它原本对应哪个 $\epsilon$ 和哪个真实动作 $a$。同一个 $z_t$ 附近可能对应很多条不同的 $(\epsilon,a)$ 路径，所以模型真正需要学的是这些 conditional velocity **在数据分布下的综合效果**，也称为 marginal velocity field。
 
 OFP 还使用 **Time-Contracting Schedule** 来采样 $m$：
 $$
