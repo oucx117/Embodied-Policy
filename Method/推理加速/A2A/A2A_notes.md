@@ -1,8 +1,12 @@
 ## Action-to-Action Flow Matching
 
-### 一. 工作动机
+> 论文：https://arxiv.org/pdf/2602.07322 
+> 代码：https://github.com/JIAjindou/A2A_Flow_Matching 
+> 项目：https://jingliangli.com/A2A_Flow_Matching/
 
-**研究动机**：Diffusion Policy / Flow Matching Policy 虽然能建模多模态连续动作，但通常从随机高斯噪声开始生成动作，需要多步 denoising / ODE integration，导致推理延迟较高。对于实时机器人控制来说，**这种“从零开始去噪”的范式并不一定必要**，因为机器人本身有连续的 proprioceptive feedback，历史动作天然包含了当前运动状态和未来动作趋势。视觉生成任务通常必须**从随机噪声开始**，因为没有明显的生成先验；但机器人控制不同，**上一段执行动作和下一段未来动作之间通常具有很强的时间连续性**。既然历史动作已经接近未来动作分布，为什么还要每次都从随机噪声开始？
+### 一. 概述
+
+**研究动机**：Diffusion Policy / Flow Matching Policy 虽然能建模多模态连续动作，但通常从随机高斯噪声开始生成动作，需要多步去噪，导致推理延迟较高。对于实时机器人控制来说，**这种“从零开始去噪”的范式并不一定必要**，因为机器人本身有连续的 proprioceptive feedback，历史动作天然包含了当前运动状态和未来动作趋势。视觉生成任务通常必须**从随机噪声开始**，因为没有明显的生成先验；但机器人控制不同，**上一段执行动作和下一段未来动作之间通常具有很强的时间连续性**。既然历史动作已经接近未来动作分布，为什么还要每次都从随机噪声开始？
 
 **核心思想**：A2A 不再把高斯噪声作为生成起点，而是**把历史 proprioceptive actions 编码成 latent starting point，再学习从历史动作 latent 到未来动作 latent 的 flow**。由于历史动作和未来动作在物理上连续，二者分布距离更短，所以生成路径更简单，可以用轻量 MLP 和很少 inference steps，甚至 one-step，生成高质量动作。
 
@@ -97,9 +101,7 @@ f_\theta(z_\tau,\tau,c)-(z_1-z_0)
 \right\|^2
 \]
 
-LFM 是在随机中间时间 $\tau$ 上做 **点级别的速度场监督**：给定 $z_\tau$，让 Flow Net 预测从历史动作 latent $z_0$ 到未来动作 latent $z_1$ 的方向，也就是学“历史动作趋势如何延续到未来动作”。$L_{AE}$ 是保证 action encoder / decoder 能保留动作结构并准确重构动作。$L_{IC}$ 则是把模型真实推理后的结果 $\hat z_1$ 拿出来，要求它在 latent space 接近 $E_a(a_{>t})$，并且解码后接近真实 future action。
-
-> Flow Matching Loss 学习的是“**最近执行过的动作趋势应该怎么延续和调整成未来动作**”。
+Flow Matching Loss 学习的是“**最近执行过的动作趋势应该怎么延续和调整成未来动作**”。
 
 #### 5. Autoencoder Reconstruction Loss
 
@@ -126,6 +128,8 @@ L_{IC}
 \]
 
 > **Flow Matching Loss 和 Inference Consistency Loss 确实有相关性，但侧重点不同**：前者是在随机中间时间 $\tau$ 上做“点”级别的速度场监督，后者则是检查经过完整 ODE 推理后的最终结果是否真的对齐目标 latent 和真实动作。前者只保证每个局部速度点学得对，后者约束“这些局部速度经过推理组合起来以后，最终结果也要对”。
+
+> $L_{FM}$ 是在随机中间时间 $\tau$ 上做点级别的速度场监督：给定 $z_\tau$，让 Flow Net 预测从历史动作 latent $z_0$ 到未来动作 latent $z_1$ 的方向，也就是学“**历史动作趋势如何延续到未来动作**”。$L_{AE}$ 是保证 action encoder / decoder 能**保留动作结构**并**准确重构动作**。$L_{IC}$ 则是把模型真实推理后的结果 $\hat z_1$ 拿出来，要求它**在 latent space 接近 $E_a(a_{>t})$**，并且**解码后接近真实 future action**。
 
 ---
 
@@ -187,7 +191,7 @@ L_{IC}
 
 ![experimenti](./images/sr.png)
 
-其中 Stack Cube 和 Pick Cube 来自仿真基准 ManiSkill，Close Box 来自仿真基准 RLBench，Open Drawer 和 Pick-Place Bowl 来自仿真基准 LIBERO。以上任务在 100 demonstrations 微调 30 epochs。
+其中 Stack Cube 和 Pick Cube 来自仿真基准 ManiSkill，Close Box 来自仿真基准 RLBench，Open Drawer 和 Pick-Place Bowl 来自仿真基准 LIBERO。以上任务均在 100 demonstrations 微调 30 epochs。
 
 #### 2. 训练效率
 
@@ -232,19 +236,17 @@ L_{IC}
 
 * **不过 A2A 对历史动作本身的不确定性更敏感**。因为它依赖历史动作作为 source，如果历史动作偏差较大，生成结果也会受影响。论文发现，**向历史动作加入少量高斯噪声可以提升对 action-level uncertainty 的鲁棒性**。
 
----
-
-### 六. 消融实验
+#### 6. 消融实验
 
 论文主要回答两个问题：是否需要 generative flow？是否需要 latent space？
 
 <img src="./images/ablation.png" alt="ablation" style="zoom:40%;" />
 
-#### 1. Regression 还是 Flow Matching？
+##### 6.1 Regression 还是 Flow Matching？
 
 作者将 flow matching 替换成 regression，其他结构保持一致。结果显示，在训练分布内，regression 和 flow matching 都可以达到较高成功率；但在环境扰动下，flow matching 的泛化能力更强。这说明 **A2A 的生成式建模不是只为了提升训练集性能，更重要的是增强对视觉扰动和环境变化的鲁棒性**。
 
-#### 2. 原始 action space 还是 latent space？
+##### 6.2 原始 action space 还是 latent space？
 
 作者还测试了直接在原始 action space 中做 flow（backbone 分别使用 UNet 和 MLP）。结果显示，raw action space 中的 flow 收敛效果明显差于 latent-space flow。论文认为，**高维 latent space 能更好地对齐历史动作和未来动作的分布，使 flow 路径更平滑、更接近直线。因此 latent-space flow 是 A2A 成功的关键之一**。
 

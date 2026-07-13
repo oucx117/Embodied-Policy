@@ -1,15 +1,16 @@
 ## Improved Mean Flows: On the Challenges of Fastforward Generative Models
 
-### 一. 研究动机
+> 论文：https://arxiv.org/pdf/2512.02012 
+> 代码：https://github.com/Lyy-iiis/imeanflow
 
-Improved Mean Flows（iMF）要解决的问题是：**原始 MeanFlow 已经证明“学习平均速度”可以支持 one-step generation，但它在训练目标和 guidance 机制上仍然不够稳定、不够灵活。**
+### 一. 概述
 
-普通 Flow Matching 学的是 instantaneous velocity，也就是某个时间点附近的局部速度。它适合多步 ODE integration，但如果只用 1-NFE，从噪声一步生成数据，模型很难直接完成大跨度跳跃。MeanFlow 因此提出让模型学习 average velocity，也就是从当前时间到目标时间这一整段的平均速度，从而支持 one-step / few-step generation。
+**研究动机**：普通 Flow Matching 学的是**某个时间点附近的局部速度**。它适合多步 ODE integration，但如果只用 1-NFE，即从噪声一步生成数据，模型很难直接完成大跨度跳跃。MeanFlow 因此提出让模型学习**从当前时间到目标时间这一整段的平均速度**，从而支持一步/少步生成。
 
 不过原始 MeanFlow 有两个主要问题：
 
 1. **训练目标依赖网络自身，不是标准回归问题。** 
-   原始 MeanFlow 的真实 average velocity 不可直接获得，于是用网络自己的预测参与构造训练目标。这会导致 target 不是一个固定的、网络无关的监督信号，训练不够稳定。
+   原始 MeanFlow 的真实平均速度不可直接获得，于是用网络自己的预测参与构造训练目标。这会导致 target 不是一个固定的、网络无关的监督信号，训练不够稳定。
 
 2. **CFG scale 在训练时固定，推理时不灵活。** 
    原始 MeanFlow 为了支持 1-NFE classifier-free guidance，需要在训练时固定 guidance scale。但不同模型大小、训练阶段、推理步数下，最优 guidance scale 可能不同。固定它会限制推理时调参空间。
@@ -50,33 +51,28 @@ Improved Mean Flows（iMF）要解决的问题是：**原始 MeanFlow 已经证�
    > >   * 训练时先让同一个模型具备两种预测能力，真正的 guidance 组合通常在推理时做。
    > > * OFP Self-Guided Regularization：在训练阶段使用，用 conditional / unconditional 的差值构造 pseudo target，让 student 学会这种修正方向，推理时不需要额外做两次预测。
 
-   因此 iMF 的目标是：**保留 MeanFlow 的 average velocity / one-step generation 思想，但把训练目标改得更稳定，并让 guidance 在推理时可调。**
+   因此 iMF 的目标是：**保留 MeanFlow 的“平均速度“和”一步生成“思想，但把训练目标改得更稳定，并让 guidance 在推理时可调。**
 
-
----
-
-### 二. 核心思想
-
-iMF 的核心思想是：**模型仍然预测 average velocity，但训练时把目标重新表述成一个更标准的 instantaneous velocity regression。**
+**核心思想**：模型仍然预测**平均速度**，但训练时把目标重新表述成一个更标准的**局部速度形式**。
 
 原始 MeanFlow 可以理解为：
 
-> 模型想直接预测 average velocity \(u_\theta\)，也就是从当前时间 \(t\) 到目标时间 \(r\) 这一整段的平均速度。但问题是，真实的 average velocity 不能像普通 Flow Matching 里的 \(e-x\) 那样直接写出来。所以原始 MeanFlow 需要借助 MeanFlow identity，并**让模型当前自己的预测 \(u_\theta\) 参与构造一个 pseudo target**。这样训练目标不是一个完全固定的监督信号，而是会随着模型自身变化，因此训练会更复杂，也更不稳定。
+> 模型想直接预测平均速度 \(u_\theta\)，也就是从当前时间 \(t\) 到目标时间 \(r\) 这一整段的平均速度。但问题是，真实的平均速度不能像普通 Flow Matching 里的 \(e-x\) 那样直接写出来。所以原始 MeanFlow 需要借助 MeanFlow identity，并**让模型当前自己的预测 \(u_\theta\) 参与构造一个伪 target**。这样训练目标不是一个完全固定的监督信号，而是会随着模型自身变化，因此训练会更复杂，也更不稳定。
 
 iMF 的做法可以理解为：
 
-> 模型仍然输出 average velocity \(u_\theta\)，但**训练时不直接拿 \(u_\theta\) 去和某个 average velocity target 做比较**。相反，它先利用 MeanFlow identity，**把 \(u_\theta\) 转换成一个“等价的瞬时速度预测” \(V_\theta\)**，然后让这个 \(V_\theta\) 去拟合普通 Flow Matching 中已知的速度目标 \(e-x\)。这样做的好处是：模型最终学到的仍然是 average velocity，但 loss 计算时使用的是更稳定、更容易监督的 velocity target。
+> 模型仍然输出 average velocity \(u_\theta\)，但**训练时不直接拿 \(u_\theta\) 去和某个平均速度 target 做比较**。相反，它先利用 MeanFlow identity，**把 \(u_\theta\) 转换成一个“等价的瞬时速度预测” \(V_\theta\)**，然后让这个 \(V_\theta\) 去拟合普通 Flow Matching 中已知的速度目标 \(e-x\)。这样做的好处是：模型最终学到的仍然是平均速度，但 loss 计算时使用的是更稳定、更容易监督的 velocity target。
 
-可以简单记为：
+简单概括：
 
 * MeanFlow：直接训练 average velocity，目标构造复杂。
 * Improved MeanFlow：网络仍预测 average velocity，但通过 MeanFlow identity 转换成 $V_θ$，再用标准 velocity target 监督。
 
 ---
 
-### 三. 模型方法
+### 二. 模型方法
 
-iMF 主要包含三个改进：**更稳定的 v-loss 形式、flexible guidance conditioning、in-context conditioning 架构。**
+iMF 主要包含三个改进：**更稳定的 v-loss 形式、灵活的 guidance conditioning、in-context conditioning 架构。**
 
 #### 1. 从 u-loss 改写为 v-loss
 
@@ -92,7 +88,7 @@ $$
 v_c=e-x
 $$
 
-原始 MeanFlow 定义从 $r$ 到 $t$ 的平均速度：
+原始 MeanFlow 定义从 $r$ 到 $t$ 的 average velocity：
 
 $$
 u(z_t,r,t)
@@ -105,6 +101,10 @@ iMF 通过 MeanFlow identity 建立 instantaneous velocity 与 average velocity 
 $$
 v(z_t,t)=u(z_t,r,t)+(t−r)\frac{d}{dt}u(z_t,r,t)
 $$
+
+一句话理解：**局部速度 = 当前这段平均速度 + 平均速度随时间变化带来的修正项**
+
+<img src="./images/MeanFlow identity.png" alt="MeanFlow identity" style="zoom:33%;" />
 
 > 这个公式来自 average velocity 的定义：
 > $$
@@ -147,9 +147,8 @@ $$
 > +
 > (t-r)\frac{d}{dt}u(z_t,r,t)
 > $$
-> 这就是 MeanFlow identity。可以用一句话理解：**瞬时速度 = 当前这段平均速度 + 平均速度随时间变化带来的修正项**。
 
-并用网络 $u_\theta$ 预测 average velocity，并通过 JVP 近似 $\frac{d}{dt}u_\theta$，得到复合函数：
+iMF 用网络 $u_\theta$ 预测 average velocity，并通过 JVP 近似 $\frac{d}{dt}u_\theta$，得到复合函数：
 $$
 V_\theta(z_t)
 =
@@ -173,7 +172,7 @@ V_\theta(z_t)-(e-x)
 \right\|^2
 $$
 
-直观理解是：**训练时不再直接监督未知的 average velocity，而是让 average velocity 经过 MeanFlow identity 后，能够还原普通 Flow Matching 的 velocity。**
+直观理解是：**训练时不再直接监督未知的 average velocity，而是让 average velocity 经过 MeanFlow identity 后，能够还原普通 Flow Matching 的 conditional velocity。**
 
 #### 2. 用 \(v_\theta\) 替代 \(e-x\) 作为 JVP 方向
 
@@ -193,13 +192,12 @@ u_\theta(z_t,r,t)
 
 这样 JVP 的方向**只依赖当前 noisy state \(z_t\)**，更接近模型推理时真正使用的速度场，也更稳定。
 
-其中 \(v_\theta\) 可以通过 boundary condition 得到：
-
-\[
-v_\theta(z_t,t)=u_\theta(z_t,t,t)
-\]
-
-也就是说，当目标时间 \(r\) 等于当前时间 \(t\) 时，区间长度趋近于 0，average velocity 就退化成 instantaneous velocity。
+> \(v_\theta(z_t,t)\) 可以通过 boundary condition 得到：
+> $$
+> v_\theta(z_t,t)=u_\theta(z_t,t,t)
+> $$
+>
+> 也就是说，当目标时间 \(r\) 等于当前时间 \(t\) 时，区间长度趋近于 0，average velocity 就退化成 instantaneous velocity。
 
 #### 3. Flexible Guidance Conditioning
 
@@ -229,9 +227,9 @@ u_\theta
 u_\theta(z_t \mid r,t,c,\Omega)
 $$
 
-这部分对图像生成很重要；对于 Fast-WAM 来说，虽然不一定直接使用 CFG，但“把推理控制量作为显式条件输入”这个思想很有价值。
-
 #### 4. Improved In-context Conditioning
+
+<img src="./images/in-context conditioning.png" alt="in-context conditioning" style="zoom: 33%;" />
 
 iMF 中条件包括很多种类：
 
@@ -248,7 +246,7 @@ iMF 中条件包括很多种类：
 
 ---
 
-### 四. 训练流程
+### 三. 训练流程
 
 iMF 的训练流程可以简化为下面几步。
 
@@ -324,7 +322,7 @@ $$
 
 ---
 
-### 五. 推理流程
+### 四. 推理流程
 
 iMF 推理时非常简单，因为网络已经学会了 average velocity。对于 one-step generation：
 
@@ -364,7 +362,7 @@ z_1 → z_0.5 → z_0
 
 ---
 
-### 六. 对 Fast-WAM 的启发
+### 五. 对 Fast-WAM 的启发
 
 iMF 对 Fast-WAM 最重要的启发是：**如果 2-step 能保持性能但 1-step 明显下降，说明模型可能只学好了局部速度 / 小步修正，没有被专门训练去完成大跨度的一步跳跃。**
 
@@ -414,13 +412,8 @@ iMF 的方法来自图像生成，直接迁移到 Fast-WAM 时可能会出现 **
 
 ---
 
-### 七. 总结
+### 六. 总结
 
 iMF 可以理解为：**保留 MeanFlow 的 average velocity 思想，但把训练目标改写成更稳定的 v-loss，并通过 flexible conditioning 支持更灵活的 one-step generation。**
 
-对 Fast-WAM 来说，它最值得借鉴的不是图像生成中的 CFG 或 ImageNet 指标，而是两个方法原则：
-
-1. 网络输出 average velocity，但 loss 可以放在更稳定的 velocity space。
-2. 推理时需要的大步跳跃能力，应该在训练时显式建模，而不是直接把多步模型硬改成 1-step。
-
-因此，iMF 是一个很适合用来思考 Fast-WAM 1-step action generation 的方法参考。它可以和 OFP 的 self-consistency / warm-start，以及 A2A 的历史动作先验结合，形成面向 Fast-WAM 的 one-step action acceleration 实验方案。
+对 Fast-WAM 来说，它最值得借鉴的是：**网络输出 average velocity，但 loss 可以放在更稳定的 velocity space**。

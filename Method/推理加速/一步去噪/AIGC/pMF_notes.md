@@ -1,10 +1,13 @@
 ## One-step Latent-free Image Generation with Pixel Mean Flows
 
+> 论文：https://arxiv.org/pdf/2601.22158 
+> 代码：https://github.com/Lyy-iiis/pMF
+
 ### 一. 研究动机
 
 现有图像生成模型通常有两个重要设计：
 
-1. **multi-step sampling**：通过多步 denoising / ODE solving，把复杂生成过程拆成许多小步；
+1. **multi-step sampling**：通过多步 denoising，把复杂生成过程拆成许多小步；
 2. **latent space generation**：先用 VAE tokenizer 把图像压缩到 latent space，再在 latent space 中生成，最后通过 decoder 还原到像素图像。
 
 这两个设计都能降低建模难度，但也带来额外开销。随着 MeanFlow / iMF 这类 one-step 方法的发展，多步采样的必要性正在下降；同时，JiT 等工作也说明 Transformer 可以直接在 pixel space 中建模。因此，一个自然问题是：
@@ -70,7 +73,7 @@ z_t-t\cdot u(z_t,r,t)
 
 > **为什么 \(x\)-prediction 更容易？**
 >
-> pMF 认为，直接预测 average velocity \(u\) 很难，**因为 \(u\) 本质上是一个速度张量，不是图像本身，它表示“从 $r$ 到 $t$ 这段轨迹平均应该怎么移动”，里面同时混有噪声方向和图像结构，所以显示出来不像自然图像**。相比之下，作者定义
+> pMF 认为，直接预测 average velocity \(u\) 很难，**因为 \(u\) 本质上是一个速度张量，不是图像本身，它表示“从 $r$ 到 $t$ 这段轨迹平均应该怎么移动”，所以显示出来不像自然图像**。相比之下，作者定义
 >
 > $$
 > x(z_t,r,t)=z_t-t\cdot u(z_t,r,t)

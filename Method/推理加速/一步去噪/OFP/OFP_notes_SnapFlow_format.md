@@ -1,8 +1,10 @@
 ## One-Step Flow Policy: Self-Distillation for Fast Visuomotor Policies
 
-### 一. 工作动机
+> 论文：https://arxiv.org/pdf/2603.12480
 
-**核心问题**：Flow Matching Policy 和 Diffusion Policy 很适合机器人模仿学习，因为它们可以生成连续、多模态的动作分布。但是这类方法通常不是一次性输出动作，而是从随机噪声开始，经过**多步 ODE / denoising** 逐步生成 action chunk。对于机器人闭环控制来说，多步 action generation 会带来**明显推理延迟**，降低控制频率，在高精度抓取、接触丰富操作和动态交互任务中尤其容易影响成功率。
+### 一. 概述
+
+**研究动机**：Flow Matching Policy 和 Diffusion Policy 很适合机器人模仿学习，因为它们可以生成连续、多模态的动作分布。但是这类方法通常不是一次性输出动作，而是从随机噪声开始，经过**多步 ODE / denoising** 逐步生成 action chunk。对于机器人闭环控制来说，多步 action generation 会带来**明显推理延迟**，降低控制频率，在高精度抓取、接触丰富操作和动态交互任务中尤其容易影响成功率。
 
 论文关注的问题可以概括为：
 
@@ -167,6 +169,8 @@ Self-Consistency Training 主要解决的是“模型能不能从一个时间区
 一句话总结：**Self-Guided Regularization 先让 student 生成 one-step 动作，再把该动作重新加噪，用 EMA teacher 的 conditional - unconditional 差异构造修正方向，并通过 pseudo-target 训练 student，让 one-step 预测更偏向任务相关的专家动作模式。**
 
 #### 5. Warm-Start：用上一轮剩余动作初始化，而不是从纯噪声开始
+
+<img src="./images/Warm-Start.png" alt="Warm-Start" style="zoom: 33%;" />
 
 Warm-Start 的核心思想是：**连续控制中，相邻两次 action chunk 通常高度相关，因此下一轮生成动作时，不一定要从纯高斯噪声开始，可以利用上一轮还没执行完的动作作为先验。** 这样可以减少从初始状态到目标动作的生成距离，让 one-step / few-step 生成更容易、更平滑。
 
