@@ -247,7 +247,7 @@ clean prefix 能连接新旧 chunk，但也可能使模型只复制前序动作�
 - **Lego Disassembly**：拆解 Lego 并按颜色分类；
 - **Towel Folding**：取出、展平、折叠并放置毛巾。
 
-![0-real](/Users/oucunxu/study/实习面试/八股/具身经典工作/VLA/Xiaomi-Robotics系列/images/0-real.png)
+![0-real](./images/0-real.png)
 
 > * Xiaomi-Robotics-0 (Sync) 表示同步执行版本；Xiaomi-Robotics-0 (Training RTC) 相比于完整版去除了 RoPE position offset、$\Lambda$-shape attention mask 和 Adaptive loss re-weighting。
 > * Throughput（吞吐量）**衡量机器人在单位时间内成功完成多少工作，重点反映执行效率，而不只是单次任务成功率。这里`pcs/min` 表示 pieces per minute (每分钟成功处理的物品数量)。

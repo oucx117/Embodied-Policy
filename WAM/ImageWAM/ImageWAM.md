@@ -175,7 +175,7 @@ LIBERO 包含 Spatial、Object、Goal 和 Long 四个 suite，用于测试空间
 
 实验结果显示：
 
-<img src="/Users/oucunxu/study/Embodied_AI/Tars/Fast-WAM 预训练/research/推理加速/ImageWAM/images/LIBERO.png" alt="LIBERO" style="zoom:50%;" />
+<img src="./images/LIBERO.png" alt="LIBERO" style="zoom:50%;" />
 
 ImageWAM 在 Long suite 上表现较好，说明 editing-aware representation 对长程任务也有帮助。
 
@@ -206,7 +206,7 @@ ImageWAM 在真实机器人上也超过 FastWAM，说明它不是只在仿真 be
 
 论文对比了 video-generation WAM 和 ImageWAM 的推理开销：
 
-![efficiency](/Users/oucunxu/study/Embodied_AI/Tars/Fast-WAM 预训练/research/推理加速/ImageWAM/images/efficiency.png)
+![efficiency](./images/efficiency.png)
 
 这说明 ImageWAM 相比显式未来视频生成路径明显更快。论文还强调，相比 video-based WAM，ImageWAM 将 FLOPs 降到约 1/6，latency 降到约 1/4。
 
