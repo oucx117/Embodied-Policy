@@ -10,7 +10,7 @@
 - **同步执行**：机器人执行完当前 action chunk 后停下，等待下一次推理，动作之间存在停顿。
 - **异步执行**：机器人在执行当前 chunk 时并行推理下一段动作，但新旧 chunk 可能时序错位，造成抖动或动作跳变。
 
-**核心思想**：Xiaomi-Robotics-0 使用预训练 VLM 理解图像和语言，以 DiT 通过 Flow Matching 生成连续动作；训练时混合机器人轨迹与通用 VL 数据，并针对异步执行引入 **clean action prefix** 和 **$\Lambda$-shape attention mask**，兼顾动作连续性与策略反应性。
+**核心思想**：Xiaomi-Robotics-0 使用预训练 VLM 理解图像和语言，以 DiT 通过 Flow Matching 生成连续动作；训练时混合机器人轨迹与通用 VL 数据，并针对异步执行引入 **clean action prefix** 和 **Λ-shape attention mask**，兼顾动作连续性与策略反应性。
 
 ---
 
@@ -40,8 +40,7 @@ VLM 处理当前观测 $\mathbf{o}_t$ 和语言指令 $l$，其最后 16 层 KV 
 DiT 的基本输入序列为：
 
 $$
-[SINK],\ \mathbf{s}_t,\ \tilde{\mathbf{a}}_t^\tau,\ldots,
-\tilde{\mathbf{a}}_{t+T-1}^\tau
+[SINK],\ \mathbf{s}_t,\ \tilde{\mathbf{a}}_t^\tau,\ldots,\tilde{\mathbf{a}}_{t+T-1}^\tau
 $$
 
 - $[SINK]$：learnable attention sink token，用于稳定注意力分布；
@@ -53,11 +52,11 @@ $$
 
   > adaLN 是 **Adaptive Layer Normalization（自适应层归一化）**。
   >
-  > * 普通 LayerNorm 使用固定的缩放和偏移参数：$\operatorname{LN}(h)=\gamma\odot\frac{h-\mu}{\sigma}+\beta$
+  > * 普通 LayerNorm 使用固定的缩放和偏移参数： $\operatorname{LN}(h)=\gamma\odot\frac{h-\mu}{\sigma}+\beta$
   >
-  > * adaLN 则让缩放量和偏移量由外部条件决定：$\operatorname{adaLN}(h,\tau) = \gamma(\tau)\odot\operatorname{LN}(h)+\beta(\tau)$
+  > * adaLN 则让缩放量和偏移量由外部条件决定： $\operatorname{adaLN}(h,\tau)=\gamma(\tau)\odot\operatorname{LN}(h)+\beta(\tau)$
   >
-  > 在 Xiaomi-Robotics-0 中，外部条件是 Flow Matching timestep \(\tau\)：
+  > 在 Xiaomi-Robotics-0 中，外部条件是 Flow Matching timestep $\tau$：
   >
   > ```text
   > τ → MLP(timestep embedding) → γ(τ), β(τ) → 调节 DiT 中间特征
@@ -99,8 +98,10 @@ $$
 
 同时在 VL 数据上使用 next-token prediction，防止 VLM 的视觉语言能力发生灾难性遗忘。
 
-> $ d_n = \left\| \hat A^{(n)}-A^{GT} \right\|_1 \quad n^*=\arg\min_n d_n \quad \mathcal L_{\text{action}} = \left\| \hat A^{(n^*)}-A^{GT} \right\|_1$
-> $\mathcal L_{\text{score}} = \sum_{n=1}^{N} \ell(\hat s_n,d_n) \quad \mathcal L = \mathcal L_{\text{action}} + \lambda\mathcal L_{\text{score}}$
+> $d_n=\left\|\hat A^{(n)}-A^{GT}\right\|_1 \quad n^*=\arg\min_n d_n \quad \mathcal L_{\text{action}}=\left\|\hat A^{(n^*)}-A^{GT}\right\|_1$
+>
+> $\mathcal L_{\text{score}}=\sum_{n=1}^{N}\ell(\hat s_n,d_n) \quad \mathcal L=\mathcal L_{\text{action}}+\lambda\mathcal L_{\text{score}}$
+>
 > [S] 的作用是提供辅助监督，促使 VLM 学到与动作质量、任务可行性有关的 action-aware 表征。
 
 #### 3. (b) Pre-training Stage 2：训练 DiT
@@ -115,26 +116,13 @@ $$
 带噪动作定义为：
 
 $$
-\tilde{\mathbf{a}}_{t:t+T}^{\tau}
-=
-\tau\mathbf{a}_{t:t+T}
-+
-(1-\tau)\boldsymbol{\epsilon},
-\qquad
-\boldsymbol{\epsilon}\sim\mathcal{N}(\mathbf{0},\mathbf{I})
+\tilde{\mathbf{a}}_{t:t+T}^{\tau}=\tau\mathbf{a}_{t:t+T}+(1-\tau)\boldsymbol{\epsilon},\qquad \boldsymbol{\epsilon}\sim\mathcal{N}(\mathbf{0},\mathbf{I})
 $$
 
 训练目标为：
 
 $$
-\mathcal{L}(\theta)=
-\left\|
-\mathbf{v}_{\theta}
-(\mathbf{o}_t,l,\mathbf{s}_t,\tilde{\mathbf{a}}^\tau,\tau)
--
-\mathbf{u}
-(\tilde{\mathbf{a}}^\tau,\mathbf{a},\tau)
-\right\|_2^2
+\mathcal{L}(\theta)=\left\|\mathbf{v}_{\theta}(\mathbf{o}_t,l,\mathbf{s}_t,\tilde{\mathbf{a}}^\tau,\tau)-\mathbf{u}(\tilde{\mathbf{a}}^\tau,\mathbf{a},\tau)\right\|_2^2
 $$
 
 $\tau$ 从 Beta 分布采样，使训练更关注噪声较强的时间步。
@@ -144,18 +132,16 @@ $\tau$ 从 Beta 分布采样，使训练更关注噪声较强的时间步。
 **同步版本**：解冻 VLM 和 DiT，在目标机器人轨迹上继续使用 Flow Matching 训练。
 
 **(c) 异步版本**：将上一轮已确定执行的 $\Delta t_c$ 个动作放在 noisy actions 前，作为 **clean action prefix**：
+
 $$
-[SINK],\mathbf{s}_t,
-\underbrace{\mathbf{a}_t,\ldots,\mathbf{a}_{t+\Delta t_c-1}}_{\text{clean prefix}},
-\underbrace{\tilde{\mathbf{a}}_{t+\Delta t_c}^{\tau},\ldots,
-\tilde{\mathbf{a}}_{t+T-1}^{\tau}}_{\text{待生成动作}}
+[SINK],\mathbf{s}_t,\underbrace{\mathbf{a}_t,\ldots,\mathbf{a}_{t+\Delta t_c-1}}_{\text{clean prefix}},\underbrace{\tilde{\mathbf{a}}_{t+\Delta t_c}^{\tau},\ldots,\tilde{\mathbf{a}}_{t+T-1}^{\tau}}_{\text{待生成动作}}
 $$
 
 clean prefix 能连接新旧 chunk，但也可能使模型只复制前序动作，忽略视觉和语言。论文采用三项改进：
 
 - **RoPE position offset**：给 noisy action tokens 的位置索引增加 10，使其与 clean prefix 可区分；
 
-- **$\Lambda$-shape attention mask**：邻近 prefix 的动作可关注 prefix，保证平滑；较远动作不能关注 prefix，迫使模型重新依赖视觉、语言和状态；
+- **Λ-shape attention mask**：邻近 prefix 的动作可关注 prefix，保证平滑；较远动作不能关注 prefix，迫使模型重新依赖视觉、语言和状态；
 
   <img src="./images/0-mask.png" alt="0-mask" style="zoom: 33%;" />
 
@@ -172,9 +158,9 @@ clean prefix 能连接新旧 chunk，但也可能使模型只复制前序动作�
 1. 使用最新图像和语言指令计算 VLM KV Cache；
 2. 从标准高斯分布初始化 action chunk：
 
-   $$
-   \mathbf{a}^{\tau=0}_{t:t+T}\sim\mathcal{N}(\mathbf{0},\mathbf{I})
-   $$
+$$
+\mathbf{a}^{\tau=0}_{t:t+T}\sim\mathcal{N}(\mathbf{0},\mathbf{I})
+$$
 
 3. 执行 **5 步 Flow Matching**，将 $\tau$ 从 0 积分到 1；
 4. 输出连续的 $T$ 步 action chunk。
@@ -226,8 +212,8 @@ clean prefix 能连接新旧 chunk，但也可能使模型只复制前序动作�
 
 <img src="./images/0-CALVIN.png" alt="0-CALVIN" style="zoom:33%;" />
 
-* ABCD $\rightarrow$ D 表示在 A、B、C、D 上训练，在 D 上测试；ABC\(\rightarrow\)D 表示只在 A、B、C 上训练，在未见过的 D 上测试。
-* `Tasks Completed in a Row` 的 `1、2、3、4、5` 表示成功连续完成至少 \(k\) 个任务的比例。
+* ABCD $\rightarrow$ D 表示在 A、B、C、D 上训练，在 D 上测试；ABC $\rightarrow$ D 表示只在 A、B、C 上训练，在未见过的 D 上测试。
+* `Tasks Completed in a Row` 的 `1、2、3、4、5` 表示成功连续完成至少 $k$ 个任务的比例。
 * `Avg. Len.` 是每条五任务指令链平均连续完成的任务数量，最大值为 5。
 
 **SimplerEnv**
@@ -249,7 +235,7 @@ clean prefix 能连接新旧 chunk，但也可能使模型只复制前序动作�
 
 ![0-real](./images/0-real.png)
 
-> * Xiaomi-Robotics-0 (Sync) 表示同步执行版本；Xiaomi-Robotics-0 (Training RTC) 相比于完整版去除了 RoPE position offset、$\Lambda$-shape attention mask 和 Adaptive loss re-weighting。
+> * Xiaomi-Robotics-0 (Sync) 表示同步执行版本；Xiaomi-Robotics-0 (Training RTC) 相比于完整版去除了 RoPE position offset、Λ-shape attention mask 和 Adaptive loss re-weighting。
 > * Throughput（吞吐量）**衡量机器人在单位时间内成功完成多少工作，重点反映执行效率，而不只是单次任务成功率。这里`pcs/min` 表示 pieces per minute (每分钟成功处理的物品数量)。
 
 异步执行显著提高 throughput，但在精细 Lego 抓取中，同步方法的成功率略高，体现了执行速度与反应精度之间的权衡。
