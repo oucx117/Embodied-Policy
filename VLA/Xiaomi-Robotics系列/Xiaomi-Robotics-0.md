@@ -52,9 +52,9 @@ $$
 
   > adaLN 是 **Adaptive Layer Normalization（自适应层归一化）**。
   >
-  > * 普通 LayerNorm 使用固定的缩放和偏移参数： $\operatorname{LN}(h)=\gamma\odot\frac{h-\mu}{\sigma}+\beta$
+  > * 普通 LayerNorm 使用固定的缩放和偏移参数： $\mathrm{LN}(h)=\gamma\odot\frac{h-\mu}{\sigma}+\beta$
   >
-  > * adaLN 则让缩放量和偏移量由外部条件决定： $\operatorname{adaLN}(h,\tau)=\gamma(\tau)\odot\operatorname{LN}(h)+\beta(\tau)$
+  > * adaLN 则让缩放量和偏移量由外部条件决定： $\mathrm{adaLN}(h,\tau)=\gamma(\tau)\odot\mathrm{LN}(h)+\beta(\tau)$
   >
   > 在 Xiaomi-Robotics-0 中，外部条件是 Flow Matching timestep $\tau$：
   >
@@ -98,10 +98,14 @@ $$
 
 同时在 VL 数据上使用 next-token prediction，防止 VLM 的视觉语言能力发生灾难性遗忘。
 
-> $d_n=\left\|\hat A^{(n)}-A^{GT}\right\|_1 \quad n^*=\arg\min_n d_n \quad \mathcal L_{\text{action}}=\left\|\hat A^{(n^*)}-A^{GT}\right\|_1$
->
-> $\mathcal L_{\text{score}}=\sum_{n=1}^{N}\ell(\hat s_n,d_n) \quad \mathcal L=\mathcal L_{\text{action}}+\lambda\mathcal L_{\text{score}}$
->
+$$
+d_n=\left\|\hat A^{(n)}-A^{GT}\right\|_1,\qquad n^*=\arg\min_n d_n,\qquad \mathcal L_{\mathrm{action}}=\left\|\hat A^{(n^*)}-A^{GT}\right\|_1
+$$
+
+$$
+\mathcal L_{\mathrm{score}}=\sum_{n=1}^{N}\ell(\hat s_n,d_n),\qquad \mathcal L=\mathcal L_{\mathrm{action}}+\lambda\mathcal L_{\mathrm{score}}
+$$
+
 > [S] 的作用是提供辅助监督，促使 VLM 学到与动作质量、任务可行性有关的 action-aware 表征。
 
 #### 3. (b) Pre-training Stage 2：训练 DiT
