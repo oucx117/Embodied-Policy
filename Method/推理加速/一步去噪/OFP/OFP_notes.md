@@ -14,9 +14,9 @@
 
 > **为什么普通 Flow Matching 学到的主要是“局部速度场”，而不是“区间平均速度场”？**
 >
-> 普通 Flow Matching 通常写成 \(v_t=a_\theta(z_t,t|o)\)，模型输入的是当前 noisy action \(z_t\) 和当前时间 \(t\)，训练目标来自某个样本对 \((\epsilon,a)\) 的直线速度 \(a-\epsilon\)。因为没有输入目标时间 \(r\)，没有“区间”的概念，所以没法学习“区间平均速度场”。此外，更关键的是监督目标 \(a-\epsilon\) 和 \(z_t\) 都不随 \(r\) 变化。因此，即使额外输入目标时间 \(r\)，如果监督目标仍然是 \(a-\epsilon\)，模型也没有明确的训练信号去学习“不同 \(r\) 对应不同跳跃区间”，很容易退化为 \(v_t=a_\theta(z_t,t|o)\)。相比之下，虽然 \(a-\epsilon\) 本身不显式依赖 \(t\)，但 \(z_t=(1-t)a+t\epsilon\) 会随 \(t\) 变化，因此它可以作为当前位置 \(z_t,t\) 附近的瞬时速度监督。
+> 普通 Flow Matching 通常写成 $v_t=a_\theta(z_t,t|o)$ ，模型输入的是当前 noisy action $z_t$ 和当前时间 $t$ ，训练目标来自某个样本对 $(\epsilon,a)$ 的直线速度 $a-\epsilon$ 。因为没有输入目标时间 $r$ ，没有“区间”的概念，所以没法学习“区间平均速度场”。此外，更关键的是监督目标 $a-\epsilon$ 和 $z_t$ 都不随 $r$ 变化。因此，即使额外输入目标时间 $r$ ，如果监督目标仍然是 $a-\epsilon$ ，模型也没有明确的训练信号去学习“不同 $r$ 对应不同跳跃区间”，很容易退化为 $v_t=a_\theta(z_t,t|o)$ 。相比之下，虽然 $a-\epsilon$ 本身不显式依赖 $t$ ，但 $z_t=(1-t)a+t\epsilon$ 会随 $t$ 变化，因此它可以作为当前位置 $z_t,t$ 附近的瞬时速度监督。
 >
-> 综上，模型主要学到的是“当前位置附近该往哪里走一小步”的局部速度场，而不是“从 \(t\) 一步跳到 \(r\) 的整段平均速度”。
+> 综上，模型主要学到的是“当前位置附近该往哪里走一小步”的局部速度场，而不是“从 $t$ 一步跳到 $r$ 的整段平均速度”。
 
 **核心思想**：OFP 的目标是从头训练一个能够 one-step / few-step 生成动作的 flow policy。它不依赖外部预训练 teacher，而是通过 **self-distillation** 让模型自己给自己构造训练信号。具体来说，OFP 将原先预测的瞬时速度改为**区间平均速度**，用 **self-consistency** 学习区间平均速度，用 **self-guidance** 提高 one-step 动作精度，再用 **warm-start** 缩短从初始状态到目标动作的生成距离。
 
@@ -29,81 +29,96 @@ OFP 的核心思路是：**不再只学习当前时间点的瞬时速度，而�
 #### 1. 模型结构：从瞬时速度改为区间平均速度
 
 普通 Flow Matching Policy 的 action head 通常可以写成：
+
 $$
 v_t = v_θ(z_t, t | o)
 $$
+
 其中：
 
-- \(v_t\)：当前时间点附近的局部速度；
-- $v_θ$：Flow Matching Policy 网络；
-- \(z_t\)：当前 noisy action；
-- \(t\)：当前噪声时间；
-- \(o\)：当前 observation。
+- $v_t$ ：当前时间点附近的局部速度；
+- $v_θ$ ：Flow Matching Policy 网络；
+- $z_t$ ：当前 noisy action；
+- $t$ ：当前噪声时间；
+- $o$ ：当前 observation。
 
 OFP 改成：
 
 $$
 u_{t,r} = v_θ(z_t, t, r | o)
 $$
-其中额外引入了一个 **目标时间 \(r\)**，表示希望模型预测**从当前时间 \(t\) 到目标时间 \(r\) 的平均速度**。
+
+其中额外引入了一个 **目标时间 $r$**，表示希望模型预测**从当前时间 $t$ 到目标时间 $r$ 的平均速度**。
 
 对应的更新公式是：
 
-\[
+$$
 z_r = z_t + (r-t)u_{t,r}
-\]
+$$
 
 因此，同一个模型可以支持两种模式：
 
-* $t$ 接近 $r$：局部速度模式，接近普通 Flow Matching。
-* $t = 0, r = 1$：一步生成模式，从纯噪声一步生成 action chunk。
+* $t$ 接近 $r$ ：局部速度模式，接近普通 Flow Matching。
+* $t = 0, r = 1$ ：一步生成模式，从纯噪声一步生成 action chunk。
 
-> 这里 OFP 和普通 Flow Matching 的关键区别是：普通 Flow Matching 主要学习局部瞬时速度；OFP 显式输入 \((t,r)\)，让模型知道“这次要从哪个时间走到哪个目标时间”。
+> 这里 OFP 和普通 Flow Matching 的关键区别是：普通 Flow Matching 主要学习局部瞬时速度；OFP 显式输入 $(t,r)$ ，让模型知道“这次要从哪个时间走到哪个目标时间”。
 
 #### 2. Self-Consistency Training：让模型学会跨区间跳跃
 
 定义了区间平均速度之后，关键问题是：**这个平均速度应该怎么监督？** 如果直接用线性插值得到的 $z_r$ 来构造目标，那么：
+
 $$
 z_t=(1-t)\epsilon+ta,\quad z_r=(1-r)\epsilon+ra
 $$
+
 于是：
+
 $$
 \frac{z_r-z_t}{r-t}=a-\epsilon
 $$
+
 这其实仍然退化成普通 Flow Matching 的 conditional velocity。
 
-OFP 因此使用 **Self-Consistency Training**。它的核心是：**在同一条生成轨迹上，从不同时间点出发，最终应该预测到一致的目标位置。**具体来说:
+OFP 因此使用 **Self-Consistency Training**。它的核心是：**在同一条生成轨迹上，从不同时间点出发，最终应该预测到一致的目标位置。** 具体来说:
 
-1. OFP 会先采样起点时间 $t$ 和目标时间 $r$，满足 $0\le t\le r\le 1$，然后在 $[t,r]$ 之间采样一个中间时间 $m$。接着用真实动作 $a$ 和噪声 $\epsilon$ 构造：
-   $$
-   z_t=(1-t)\epsilon+ta,\quad z_m=(1-m)\epsilon+ma
-   $$
-   其中 $z_t$ 是起点 noisy action，$z_m$ 是中间 noisy action。
+1. OFP 会先采样起点时间 $t$ 和目标时间 $r$ ，满足 $0\le t\le r\le 1$ ，然后在 $[t,r]$ 之间采样一个中间时间 $m$ 。接着用真实动作 $a$ 和噪声 $\epsilon$ 构造：
+
+$$
+z_t=(1-t)\epsilon+ta,\quad z_m=(1-m)\epsilon+ma
+$$
+
+   其中 $z_t$ 是起点 noisy action， $z_m$ 是中间 noisy action。
 
 2. 然后，OFP 让 **EMA teacher** 从 $z_m$ 出发，预测从 $m$ 到 $r$ 的平均速度，并得到一个预测终点：
-   $$
-   \hat{z}_r=z_m+(r-m)u_{\theta^-}(z_m,m,r|o)
-   $$
+
+$$
+\hat{z}_r=z_m+(r-m)u_{\theta^-}(z_m,m,r|o)
+$$
+
    这里的 **EMA teacher** 不是外部 teacher，而是当前 student 模型参数的滑动平均版本。它变化更慢，因此输出相对稳定。
 
 3. 有了 $\hat{z}_r$ 后，OFP 用它来构造从 $z_t$ 到 $\hat{z}_r$ 的平均速度目标：
-   $$
-   u_{\text{target}}=\frac{\hat{z}_r-z_t}{r-t}
-   $$
+
+$$
+u_{\text{target}}=\frac{\hat{z}_r-z_t}{r-t}
+$$
+
    然后训练 student 去预测这个目标。
 
-> **简单理解**：OFP 让 EMA teacher 根据模型当前学到的生成轨迹，从中间点 $z_m$ 预测到目标时间 $r$ 的终点 $\hat z_r$；然后让 student 从更早的 $z_t$ 直接预测到同一个 $\hat z_r$。这样 student 学到的是沿模型当前生成轨迹，从 $t$ 到 $r$ 这一整段应该如何走，也就是该区间上的平均速度。
+> **简单理解**：OFP 让 EMA teacher 根据模型当前学到的生成轨迹，从中间点 $z_m$ 预测到目标时间 $r$ 的终点 $\hat z_r$ ；然后让 student 从更早的 $z_t$ 直接预测到同一个 $\hat z_r$ 。这样 student 学到的是沿模型当前生成轨迹，从 $t$ 到 $r$ 这一整段应该如何走，也就是该区间上的平均速度。
 
 > 关于“**从噪声 $\epsilon$ 到真实动作 $a$ 的直线速度**”和“**局部速度场**”的区别：
 >
 > - “**从 $\epsilon$ 到 $a$ 的直线速度**”是训练样本层面的监督目标，是在给定**某个具体样本对** $(\epsilon,a)$ 的条件下定义的速度，它不是整个数据分布上的平均速度，也称为 conditional velocity；
-> - “**局部速度场**”是模型学完之后在推理时使用的东西。推理时，模型只看到当前 noisy action $z_t$，并不知道它原本对应哪个 $\epsilon$ 和哪个真实动作 $a$。同一个 $z_t$ 附近可能对应很多条不同的 $(\epsilon,a)$ 路径，所以模型真正需要学的是这些 conditional velocity **在数据分布下的综合效果**，也称为 marginal velocity field。
+> - “**局部速度场**”是模型学完之后在推理时使用的东西。推理时，模型只看到当前 noisy action $z_t$ ，并不知道它原本对应哪个 $\epsilon$ 和哪个真实动作 $a$ 。同一个 $z_t$ 附近可能对应很多条不同的 $(\epsilon,a)$ 路径，所以模型真正需要学的是这些 conditional velocity **在数据分布下的综合效果**，也称为 marginal velocity field。
 
-OFP 还使用 **Time-Contracting Schedule** 来采样 $m$：
+OFP 还使用 **Time-Contracting Schedule** 来采样 $m$ ：
+
 $$
 m\sim U[t,\;t+(r-t)\rho(s)]
 $$
-其中 $s$ 是训练步数，$\rho(s)$ 会随着训练逐渐减小。训练早期，$\rho(s)\approx 1$，$m$ 可以在 $[t,r]$ 中较大范围采样，teacher 预测相对容易；训练后期，$\rho(s)\to 0$，$m$ 越来越靠近 $t$，模型被要求学习更严格的局部一致性。论文也说明，这种设计可以从稳定初始化逐渐过渡到更精细的轨迹约束。
+
+其中 $s$ 是训练步数， $\rho(s)$ 会随着训练逐渐减小。训练早期， $\rho(s)\approx 1$ ， $m$ 可以在 $[t,r]$ 中较大范围采样，teacher 预测相对容易；训练后期， $\rho(s)\to 0$ ， $m$ 越来越靠近 $t$ ，模型被要求学习更严格的局部一致性。论文也说明，这种设计可以从稳定初始化逐渐过渡到更精细的轨迹约束。
 
 #### 3. Boundary Anchoring：保留普通 Flow Matching 能力
 
@@ -114,11 +129,11 @@ $$
 * Self-Consistency：教模型做跨时间区间的跳跃。
 * Boundary Anchoring：保证模型仍然会普通 Flow Matching 的局部速度预测。
 
-对应地，当 \(r=t\) 时，模型仍然要预测普通局部速度：
+对应地，当 $r=t$ 时，模型仍然要预测普通局部速度：
 
-\[
+$$
 u_\theta(z_t,t,t|o)\approx a-\epsilon
-\]
+$$
 
 这个设计很重要，因为它让 OFP 不只是 one-step generator。推理时如果愿意多花一点计算，也可以用 2-step、4-step 等 few-step sampling 获得更高精度。
 
@@ -126,42 +141,47 @@ u_\theta(z_t,t,t|o)\approx a-\epsilon
 
 Self-Consistency Training 主要解决的是“模型能不能从一个时间区间直接跳到另一个时间区间”，也就是让模型学会 one-step / few-step 的区间平均速度。**但它不一定保证 one-step 生成的动作足够精确**。对于机器人操作来说，这一点很关键：抓取、插入、对齐等任务中，动作稍微偏一点就可能失败。因此 OFP 进一步引入 **Self-Guided Regularization**，让 one-step 预测更靠近当前任务下的专家动作高密度区域。具体流程如下：
 
-1. 首先，student 根据当前 noisy action $z_t$、时间区间 $[t,1]$ 和 observation $o$，预测一个 one-step velocity：
-   $$
-   y = u_\theta(z_t,t,1|o)
-   $$
+1. 首先，student 根据当前 noisy action $z_t$ 、时间区间 $[t,1]$ 和 observation $o$ ，预测一个 one-step velocity：
+
+$$
+y = u_\theta(z_t,t,1|o)
+$$
+
    这个 $y$ 会得到一个 one-step action prediction：
-   $$
-   \hat a = z_t + (1-t)y
-   $$
-   但这个 $\hat a$ 可能还不够精确。于是 OFP 会把 $\hat a$ 重新加噪到某个随机时间 $t'$，得到 $\tilde z_{t'}$。这样做是因为 **flow model 更擅长在 noisy action space 中估计速度，而不是直接在 clean action 上判断“这个动作该往哪里修正”**。
+
+$$
+\hat a = z_t + (1-t)y
+$$
+
+   但这个 $\hat a$ 可能还不够精确。于是 OFP 会把 $\hat a$ 重新加噪到某个随机时间 $t'$ ，得到 $\tilde z_{t'}$ 。这样做是因为 **flow model 更擅长在 noisy action space 中估计速度，而不是直接在 clean action 上判断“这个动作该往哪里修正”**。
 
 2. 接着，EMA teacher **在同一个 $\tilde z_{t'}$ 上做两次预测**：
 
-   * conditional prediction：输入 observation $o$，表示“**当前任务下应该如何修正**”。
-   * unconditional prediction：输入空条件 $φ$，表示“**不知道具体任务时，普通动作分布大概如何修正**”。
+   * conditional prediction：输入 observation $o$ ，表示“**当前任务下应该如何修正**”。
+   * unconditional prediction：输入空条件 $φ$ ，表示“**不知道具体任务时，普通动作分布大概如何修正**”。
 
    两者的差异就是任务条件带来的修正方向：
-   $$
-   g =
-   u_{\theta^-}(\tilde z_{t'},t',t'|o)
-   -
-   u_{\theta^-}(\tilde z_{t'},t',t'|\phi)
-   $$
+
+$$
+g = u_{\theta^-}(\tilde z_{t'},t',t'|o) - u_{\theta^-}(\tilde z_{t'},t',t'|\phi)
+$$
+
    可以直观理解为：**当前任务相对于普通动作分布，多出来的任务相关修正方向**
 
 3. 然后 OFP 用这个 guidance direction 构造一个 stop-gradient 的 伪目标：
-   $$
-   y_{\text{target}}=\text{sg}[y+g]
-   $$
+
+$$
+y_{\text{target}}=\text{sg}[y+g]
+$$
+
    其中 $\text{sg}[\cdot]$ 表示 stop-gradient，也就是这个 target 只作为监督目标，**不让梯度反传到 EMA teacher 或 target 构造过程**。
 
 4. 最后用 MSE 训练 student：
-   $$
-   L_{\text{self-guidance}}
-   =
-   \|y-y_{\text{target}}\|^2
-   $$
+
+$$
+L_{\text{self-guidance}} = \|y-y_{\text{target}}\|^2
+$$
+
    这个 loss 的效果是：让 student 当前的 one-step velocity $y$ 往 $y+g$ 的方向移动。也就是说，它不是在推理时额外加一个 guidance step，而是在训练时让模型逐渐学会：**以后自己输出的 one-step velocity 就应该包含这种 conditional guidance 修正**。
 
 > Self-Guided Regularization 的指导信号来自 EMA teacher 自己的 conditional / unconditional 预测差异，所以叫 **self-guided**。它借鉴的是 Classifier-Free Guidance 的思想：**无条件预测代表泛化动作趋势，有条件预测代表当前任务下的动作趋势**，两者差异就能告诉模型“**不要只生成普通动作，要往当前 observation 对应的专家动作模式靠近**”。
@@ -175,26 +195,32 @@ Self-Consistency Training 主要解决的是“模型能不能从一个时间区
 Warm-Start 的核心思想是：**连续控制中，相邻两次 action chunk 通常高度相关，因此下一轮生成动作时，不一定要从纯高斯噪声开始，可以利用上一轮还没执行完的动作作为先验。** 这样可以减少从初始状态到目标动作的生成距离，让 one-step / few-step 生成更容易、更平滑。
 
 假设上一轮生成的 action chunk 是：
+
 $$
 a^{prev}=[a_1,a_2,\dots,a_H]
 $$
-机器人只执行前 $h$ 个动作 $[a_1, ..., a_h]$，那么剩下的动作 $[a_{h+1}, ..., a_H]$ 其实已经是上一轮模型对未来动作的预测。
+
+机器人只执行前 $h$ 个动作 $[a_1, ..., a_h]$ ，那么剩下的动作 $[a_{h+1}, ..., a_H]$ 其实已经是上一轮模型对未来动作的预测。
 
 1. OFP 先将这部分未执行动作前移，并用最后一个动作 $a_H$ 重复补齐长度，得到 warm-start prior：
-   $$
-   a_{\text{warm}}=[a_{h+1},...,a_H,\underbrace{a_H,...,a_H}_{h\text{ 次}}]
-   $$
+
+$$
+a_{\text{warm}}=[a_{h+1},...,a_H,\underbrace{a_H,...,a_H}_{h\text{ 次}}]
+$$
 
 2. 得到 $a_{\text{warm}}$ 后，OFP 不会直接把它当作最终动作，而是把它和高斯噪声混合，构造初始 noisy action：
-   $$
-   z_{t_w}=(1-t_w)\epsilon+t_w a_{\text{warm}}
-   $$
-   其中 $t_w\in(0,1]$ 是 warm-start 的噪声水平，也可以理解为“相信上一轮动作先验的程度”。$t_w$ 越大，越接近 $a_{\text{warm}}$；$t_w$ 越小，越接近纯噪声。论文实验中 $t_w$ 是手动设置的超参数，效果最好的是 $t_w=0.15$，说明它只加入少量历史动作先验，主要仍保留噪声带来的修正空间。
+
+$$
+z_{t_w}=(1-t_w)\epsilon+t_w a_{\text{warm}}
+$$
+
+   其中 $t_w\in(0,1]$ 是 warm-start 的噪声水平，也可以理解为“相信上一轮动作先验的程度”。 $t_w$ 越大，越接近 $a_{\text{warm}}$ ； $t_w$ 越小，越接近纯噪声。论文实验中 $t_w$ 是手动设置的超参数，效果最好的是 $t_w=0.15$ ，说明它只加入少量历史动作先验，主要仍保留噪声带来的修正空间。
 
 3. 最后，模型从 $z_{t_w}$ 出发生成新的 action chunk：
-   $$
-   \hat a=z_{t_w}+(1-t_w)u_\theta(z_{t_w},t_w,1|o)
-   $$
+
+$$
+\hat a=z_{t_w}+(1-t_w)u_\theta(z_{t_w},t_w,1|o)
+$$
 
 需要注意的是，Warm-Start 第一次推理时不能用，因为还没有上一轮 action chunk。它主要在第二次及之后的连续 replan 中发挥作用。它本身不需要额外训练，更像一个推理阶段的初始化技巧。
 
@@ -207,158 +233,169 @@ OFP 是一个 from-scratch self-distillation 框架，不需要外部预训练 t
 $$
 L = L_{flow} + λ_c L_{self-consistency} + λ_g L_{self-guidance}
 $$
+
 各部分含义如下：
 
 | 训练项 | 作用 |
 |---|---|
-| \(L_{\text{flow}}\) | 保留普通 Flow Matching 的局部速度能力 |
-| \(L_{\text{self-consistency}}\) | 学习区间平均速度，使模型支持 one-step / few-step 跳跃 |
-| \(L_{\text{self-guidance}}\) | 提升 one-step 动作精度，让预测更靠近专家动作高密度区域 |
+| $L_{\text{flow}}$ | 保留普通 Flow Matching 的局部速度能力 |
+| $L_{\text{self-consistency}}$ | 学习区间平均速度，使模型支持 one-step / few-step 跳跃 |
+| $L_{\text{self-guidance}}$ | 提升 one-step 动作精度，让预测更靠近专家动作高密度区域 |
 
 简化训练流程如下：
 
-> 输入：observation $o$、真实 action chunk $a$、噪声 $\epsilon$
+> 输入：observation $o$ 、真实 action chunk $a$ 、噪声 $\epsilon$
 >
 > * **Flow Anchoring**：
 >   
->   1. 采样时间 $t$，并构造加噪动作：
->      $$
->      z_t=(1-t)\epsilon+ta
->      $$
+>   1. 采样时间 $t$ ，并构造加噪动作：
+
+$$
+z_t=(1-t)\epsilon+ta
+$$
+
 >   
 >   2. 让 student 在局部速度模式下预测当前位置的速度：
->      $$
->      u_\theta(z_t,t,t|o)
->      $$
+
+$$
+u_\theta(z_t,t,t|o)
+$$
+
 >   
->      这里令目标时间也等于 $t$，表示模型预测的是当前时间点附近的局部速度。
+>      这里令目标时间也等于 $t$ ，表示模型预测的是当前时间点附近的局部速度。
 >   
 >   3. 使用普通 Flow Matching 的 conditional velocity 作为监督目标：
->      $$
->      a-\epsilon
->      $$
+
+$$
+a-\epsilon
+$$
+
 >   
 >      计算：
->      $$
->      L_{flow}
->      =
->      \left\|
->      u_\theta(z_t,t,t|o)-(a-\epsilon)
->      \right\|^2
->      $$
+
+$$
+L_{flow} = \left\| u_\theta(z_t,t,t|o)-(a-\epsilon) \right\|^2
+$$
+
 >   
 >      这部分的作用是保留普通 Flow Matching 能力，防止模型只学习跨区间跳跃而偏离专家动作分布。
 >   
 > * **Self-Consistency**：
 >   
->   1. 采样起点时间 $t$、目标时间 $r$，满足 $t<r$；再根据 Time-Contracting Schedule 在 $[t,r]$ 中采样中间时间 $m$：
->      $$
->      m\sim U[t,\;t+(r-t)\rho(s)]
->      $$
+>   1. 采样起点时间 $t$ 、目标时间 $r$ ，满足 $t<r$ ；再根据 Time-Contracting Schedule 在 $[t,r]$ 中采样中间时间 $m$ ：
+
+$$
+m\sim U[t,\;t+(r-t)\rho(s)]
+$$
+
 >   
 >   2. 构造起点和中间点的 noisy action：
->      $$
->      z_t=(1-t)\epsilon+ta
->      $$
->      $$
->      z_m=(1-m)\epsilon+ma
->      $$
+
+$$
+z_t=(1-t)\epsilon+ta
+$$
+
+$$
+z_m=(1-m)\epsilon+ma
+$$
+
 >   
 >   3. EMA teacher 从 $z_m$ 出发，预测从 $m$ 到 $r$ 的平均速度，并得到预测终点：
->      $$
->      \hat{z}_r
->      =
->      z_m+(r-m)u_{\theta^-}(z_m,m,r|o)
->      $$
+
+$$
+\hat{z}_r = z_m+(r-m)u_{\theta^-}(z_m,m,r|o)
+$$
+
 >   
 >   4. 用 teacher 预测的终点构造从 $t$ 到 $r$ 的平均速度目标：
->      $$
->      u_{target}
->      =
->      \frac{\hat{z}_r-z_t}{r-t}
->      $$
+
+$$
+u_{target} = \frac{\hat{z}_r-z_t}{r-t}
+$$
+
 >   
 >   5. student 直接从 $z_t$ 预测从 $t$ 到 $r$ 的平均速度：
->      $$
->      u_\theta(z_t,t,r|o)
->      $$
+
+$$
+u_\theta(z_t,t,r|o)
+$$
+
 >   
 >      计算：
->      $$
->      L_{self-consistency}
->      =
->      \left\|
->      u_\theta(z_t,t,r|o)-u_{target}
->      \right\|^2
->      $$
+
+$$
+L_{self-consistency} = \left\| u_\theta(z_t,t,r|o)-u_{target} \right\|^2
+$$
+
 >   
->      这部分的作用是让 student 学会：teacher 从中间点 $z_m$ 预测到的终点 $\hat{z}_r$，student 从更早的 $z_t$ 出发也应该能直接预测到。也就是让模型学习跨区间的一致平均速度。
+>      这部分的作用是让 student 学会：teacher 从中间点 $z_m$ 预测到的终点 $\hat{z}_r$ ，student 从更早的 $z_t$ 出发也应该能直接预测到。也就是让模型学习跨区间的一致平均速度。
 >   
 > * **Self-Guidance**：
 >   1. student 先做一次 one-step 预测：
->      $$
->      y = u_\theta(z_t,t,1|o)
->      $$
+
+$$
+y = u_\theta(z_t,t,1|o)
+$$
+
 >
 >      得到：
->      $$
->      \hat{a} = z_t + (1-t)y
->      $$
+
+$$
+\hat{a} = z_t + (1-t)y
+$$
+
 >
->   2. 将 $\hat{a}$ 重新加噪到随机时间 $t'$：
->      $$
->      \tilde{z}_{t'}=(1-t')\epsilon'+t'\hat{a}
->      $$
+>   2. 将 $\hat{a}$ 重新加噪到随机时间 $t'$ ：
+
+$$
+\tilde{z}_{t'}=(1-t')\epsilon'+t'\hat{a}
+$$
+
 >
 >      这一步是为了把 one-step 结果放回 flow model 熟悉的 noisy action space。
 >
 >   3. EMA teacher 在 $\tilde{z}_{t'}$ 上分别进行 conditional / unconditional 预测：
->      $$
->      u_{\theta^-}(\tilde{z}_{t'},t',t'|o)
->      $$
->      $$
->      u_{\theta^-}(\tilde{z}_{t'},t',t'|\phi)
->      $$
+
+$$
+u_{\theta^-}(\tilde{z}_{t'},t',t'|o)
+$$
+
+$$
+u_{\theta^-}(\tilde{z}_{t'},t',t'|\phi)
+$$
+
 >
 >   4. 用二者差异构造 guidance direction：
->      $$
->      g
->      =
->      u_{\theta^-}(\tilde{z}_{t'},t',t'|o)
->      -
->      u_{\theta^-}(\tilde{z}_{t'},t',t'|\phi)
->      $$
+
+$$
+g = u_{\theta^-}(\tilde{z}_{t'},t',t'|o) - u_{\theta^-}(\tilde{z}_{t'},t',t'|\phi)
+$$
+
 >
 >      这里的 $g$ 可以理解为“当前任务条件相对于普通动作分布，多出来的修正方向”。
 >
 >   5. 构造 stop-gradient pseudo target：
->      $$
->      y_{target}
->      =
->      \text{sg}[y+g]
->      $$
+
+$$
+y_{target} = \text{sg}[y+g]
+$$
+
 >
 >   6. student 学习这个 pseudo target，计算：
->      $$
->      L_{self-guidance}
->      =
->      \left\|
->      y-y_{target}
->      \right\|^2
->      $$
+
+$$
+L_{self-guidance} = \left\| y-y_{target} \right\|^2
+$$
+
 >
 >      这部分的作用是让 one-step velocity 往 conditional expert mode 靠近，使一步生成的动作更精确。
 >
 > 总 loss：
-> $$
-> L
-> =
-> L_{flow}
-> +
-> \lambda_c L_{self-consistency}
-> +
-> \lambda_g L_{self-guidance}
-> $$
+
+$$
+L = L_{flow} + \lambda_c L_{self-consistency} + \lambda_g L_{self-guidance}
+$$
+
 >
 > 更新 student 模型参数 $\theta$
 >
@@ -374,24 +411,26 @@ OFP 支持 one-step 和 few-step 两种推理方式。
 
 最低延迟模式下，OFP 直接从噪声一步生成动作：
 
-\[
+$$
 \hat{a}=\epsilon+u_\theta(\epsilon,0,1|o)
-\]
+$$
 
 这个过程只需要一次 action model forward。
 
 #### 2. Few-step inference
 
-如果任务对精度要求更高，也可以把 \([0,1]\) 分成多个小区间：
+如果任务对精度要求更高，也可以把 $[0,1]$ 分成多个小区间：
 
 $$
 z_0 → z_{τ1} → z_{τ2} → ... → z_1
 $$
+
 每一步都预测当前小区间的平均速度：
 
 $$
 a_θ(z_{τk}, τ_k, τ_{k+1} | o)
 $$
+
 因此 OFP 比 OneDP 这类只能 one-step 的方法更灵活：它可以在低延迟和高精度之间切换。
 
 > 在连续 replan 中，OFP 可以不用纯噪声初始化，而是从上一轮剩余动作构造 warm-start prior：

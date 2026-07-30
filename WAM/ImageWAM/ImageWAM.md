@@ -38,9 +38,9 @@ $$
 
 其中：
 
-- $L$：editing backbone 的 transformer 层数；
-- $K_l, V_l$：第 $l$ 层的 key / value cache；
-- $C_{edit}$：作为 action expert 的上下文输入。
+- $L$ ：editing backbone 的 transformer 层数；
+- $K_l, V_l$ ：第 $l$ 层的 key / value cache；
+- $C_{edit}$ ：作为 action expert 的上下文输入。
 
 这些 editing cache 不等于目标图像本身，而是 image editing model 在思考“这张图应该怎么改”时产生的中间表示。
 
@@ -71,15 +71,15 @@ $$
 
 其中：
 
-- $x_1$：目标未来图像的 latent；
-- $\epsilon$：高斯噪声；
-- $t$：image flow time。
+- $x_1$ ：目标未来图像的 latent；
+- $\epsilon$ ：高斯噪声；
+- $t$ ：image flow time。
 
 editing branch 预测 velocity field，使其能够从噪声走向目标图像 latent。这个目标的作用不是为了推理时生成好看的图像，而是为了**让 editing branch 的中间 cache 保留“任务相关的视觉变化”信息**。
 
 ##### B. Action Flow Matching Objective
 
-action expert 也使用 flow matching。给定真实动作序列 $a_{0:H}$ 和噪声 $\epsilon_a$，构造插值动作：
+action expert 也使用 flow matching。给定真实动作序列 $a_{0:H}$ 和噪声 $\epsilon_a$ ，构造插值动作：
 
 $$
 a_t = (1-t)\epsilon_a + t a_{0:H}
@@ -93,10 +93,10 @@ $$
 
 其中：
 
-- $C_{edit}$：editing KV cache；
-- $o_t$：当前视觉观测；
-- $q_t$：当前机器人 proprioceptive state；
-- $a_{0:H}$：真实 action chunk。
+- $C_{edit}$ ：editing KV cache；
+- $o_t$ ：当前视觉观测；
+- $q_t$ ：当前机器人 proprioceptive state；
+- $a_{0:H}$ ：真实 action chunk。
 
 直观理解：action expert 学习如何在 editing context 的指导下，从随机动作噪声生成正确动作序列。
 

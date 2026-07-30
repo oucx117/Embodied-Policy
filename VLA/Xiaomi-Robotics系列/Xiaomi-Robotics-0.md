@@ -33,7 +33,7 @@ Xiaomi-Robotics-0 是一个端到端 VLA，输入当前观测图像、语言指�
 
 **B. VLM**
 
-VLM 处理当前观测 $\mathbf{o}_t$ 和语言指令 $l$，其最后 16 层 KV Cache 作为 DiT 的视觉语言条件。这样既能利用预训练 VLM 的语义知识，也无需将连续动作离散化为 token。
+VLM 处理当前观测 $\mathbf{o}_t$ 和语言指令 $l$ ，其最后 16 层 KV Cache 作为 DiT 的视觉语言条件。这样既能利用预训练 VLM 的语义知识，也无需将连续动作离散化为 token。
 
 **C. DiT Action Expert**
 
@@ -43,12 +43,12 @@ $$
 [SINK],\ \mathbf{s}_t,\ \tilde{\mathbf{a}}_t^\tau,\ldots,\tilde{\mathbf{a}}_{t+T-1}^\tau
 $$
 
-- $[SINK]$：learnable attention sink token，用于稳定注意力分布；
+- $[SINK]$ ：learnable attention sink token，用于稳定注意力分布；
 
   > [SINK] 是一个用于吸收暂时无用注意力的“空白槽位”，有些注意力头在某些情况下没有特别重要的信息需要关注，但 Softmax 又要求注意力权重之和为 1。此时，模型可以把多余的注意力分配给 `[SINK]`，而不是错误地集中在某个 action token 上。
-- $\mathbf{s}_t$：经 MLP 编码的机器人状态；
-- $\tilde{\mathbf{a}}^\tau$：带噪 action chunk；
-- $\tau$：通过 adaLN 注入的 Flow Matching timestep。
+- $\mathbf{s}_t$ ：经 MLP 编码的机器人状态；
+- $\tilde{\mathbf{a}}^\tau$ ：带噪 action chunk；
+- $\tau$ ：通过 adaLN 注入的 Flow Matching timestep。
 
   > adaLN 是 **Adaptive Layer Normalization（自适应层归一化）**。
   >
@@ -56,7 +56,7 @@ $$
   >
   > * adaLN 则让缩放量和偏移量由外部条件决定： $\mathrm{adaLN}(h,\tau)=\gamma(\tau)\odot\mathrm{LN}(h)+\beta(\tau)$
   >
-  > 在 Xiaomi-Robotics-0 中，外部条件是 Flow Matching timestep $\tau$：
+  > 在 Xiaomi-Robotics-0 中，外部条件是 Flow Matching timestep $\tau$ ：
   >
   > ```text
   > τ → MLP(timestep embedding) → γ(τ), β(τ) → 调节 DiT 中间特征
@@ -84,7 +84,7 @@ Pre-training 阶段的 DiT 使用 causal attention，使后续动作能够关注
 
 #### 2.  (a) Pre-training Stage 1：训练 action-aware VLM
 
-模型在 VLM 后追加 $T$ 个 learnable action tokens $[A_i]$ 和一个 score token $[S]$：
+模型在 VLM 后追加 $T$ 个 learnable action tokens $[A_i]$ 和一个 score token $[S]$ ：
 
 $$
 \mathbf{o}_t,\ l,\ \mathbf{s}_t,\ [A_1],\ldots,[A_T],\ [S]
@@ -151,7 +151,7 @@ clean prefix 能连接新旧 chunk，但也可能使模型只复制前序动作�
 
 - **Adaptive loss re-weighting**：根据 online prediction 与 ground truth 的 $L_1$ 误差提高偏差较大样本的权重，让模型重点学习：当执行状态已经偏离演示轨迹时，如何纠正明显错误并回到合理动作。
 
-训练时从 $\{0,1,\ldots,6\}$ 中随机采样 $\Delta t_c$。
+训练时从 $\{0,1,\ldots,6\}$ 中随机采样 $\Delta t_c$ 。
 
 ---
 
@@ -196,7 +196,7 @@ $$
 新推理使用当前 chunk 从 $T_e$ 到 $T_e+\Delta t_c-1$ 的动作作为 clean prefix。推理完成后：
 
 - 从新 chunk 的第 $\Delta t_{\mathrm{inf}}$ 步开始执行；
-- 设置 $\Delta t_c\geq\Delta t_{\mathrm{inf}}$，确保 prefix 覆盖整个推理窗口，从而推理期间始终有已确定动作可执行。
+- 设置 $\Delta t_c\geq\Delta t_{\mathrm{inf}}$ ，确保 prefix 覆盖整个推理窗口，从而推理期间始终有已确定动作可执行。
 
 因此，已经在推理期间执行过的 prefix 不会重复执行，机器人直接从时间对齐的位置接入新 chunk。
 
@@ -240,7 +240,7 @@ $$
 ![0-real](./images/0-real.png)
 
 > * Xiaomi-Robotics-0 (Sync) 表示同步执行版本；Xiaomi-Robotics-0 (Training RTC) 相比于完整版去除了 RoPE position offset、Λ-shape attention mask 和 Adaptive loss re-weighting。
-> * Throughput（吞吐量）**衡量机器人在单位时间内成功完成多少工作，重点反映执行效率，而不只是单次任务成功率。这里`pcs/min` 表示 pieces per minute (每分钟成功处理的物品数量)。
+> * Throughput（吞吐量）衡量机器人在单位时间内成功完成多少工作，重点反映执行效率，而不只是单次任务成功率。这里`pcs/min` 表示 pieces per minute (每分钟成功处理的物品数量)。
 
 异步执行显著提高 throughput，但在精细 Lego 抓取中，同步方法的成功率略高，体现了执行速度与反应精度之间的权衡。
 

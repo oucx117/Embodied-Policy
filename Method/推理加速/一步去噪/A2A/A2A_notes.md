@@ -42,7 +42,7 @@ historical proprioceptive actions + visual condition → future action
 > | 方法                   | OFP Warm-Start                                  | A2A                                          |
 > | ---------------------- | ----------------------------------------------- | -------------------------------------------- |
 > | 历史动作作用           | 推理时初始化 prior                              | 训练和推理中的 source distribution           |
-> | 起点                   | shift + pad 上一轮剩余 action，加噪后作为初始点 | proprioceptive action history 编码成 \(z_0\) |
+> | 起点                   | shift + pad 上一轮剩余 action，加噪后作为初始点 | proprioceptive action history 编码成 $z_0$ |
 > | 是否改变训练目标       | 不一定，主要是推理初始化技巧                    | 是，直接训练 action-to-action flow           |
 > | 生成空间               | 通常仍在 action/noisy action space              | 高维 action latent space                     |
 > | 核心假设               | 相邻 action chunk 相似                          | 历史动作分布和未来动作分布接近               |
@@ -52,11 +52,11 @@ historical proprioceptive actions + visual condition → future action
 
 A2A 使用一段**历史动作**和**历史视觉观测**来预测**未来动作**：
 
-* **历史动作**：$a_{≤t} = {a_{t-n+1}, ..., a_t}$
-* **历史视觉观测**：$I_{≤t} = {I_{t-m+1}, ..., I_t}$
-* **未来动作**：$a_{>t} = {a_{t+1}, ..., a_{t+n}}$
+* **历史动作**： $a_{≤t} = {a_{t-n+1}, ..., a_t}$
+* **历史视觉观测**： $I_{≤t} = {I_{t-m+1}, ..., I_t}$
+* **未来动作**： $a_{>t} = {a_{t+1}, ..., a_{t+n}}$
 
-其中 \(n\) 是动作 horizon，\(m\) 是视觉 observation horizon。论文实验中通常设置 \(n=m=8\)。
+其中 $n$ 是动作 horizon， $m$ 是视觉 observation horizon。论文实验中通常设置 $n=m=8$ 。
 
 #### 3. Latent space 中的 action-to-action flow
 
@@ -68,38 +68,34 @@ A2A 没有直接在原始动作空间里做 flow，而是**先把动作 chunk �
 * **Source path**：历史动作 $a_{≤t} \in n \times 9$ $\rightarrow$ 1D CNN action encoder $\rightarrow$ latent starting point $z_0 \in 512$
 * **Target path**：未来动作 $a_{>t} \in n \times 9$ $\rightarrow$ 1D CNN action encoder $\rightarrow$ target latent $z_1 \in 512$ 
 
-然后模型在 latent space 中学习 flow：$z_0 \rightarrow z_1$，其中 Flow Net 使用 AdaLN-MLP blocks，预测从 \(z_0\) 到 \(z_1\) 的 vector field。
+然后模型在 latent space 中学习 flow： $z_0 \rightarrow z_1$ ，其中 Flow Net 使用 AdaLN-MLP blocks，预测从 $z_0$ 到 $z_1$ 的 vector field。
 
 > A2A 选择在 latent space 中做 flow 的原因是：**低维动作空间不容易对齐历史动作和未来动作的分布；映射到高维 latent 后，历史动作 latent 和未来动作 latent 的结构更容易对齐，transport 更平滑，也更适合轻量 MLP 学习**。
 
 #### 4. Flow Matching Loss
 
-普通 Flow Matching 通常学习从噪声 \(x_0\sim \mathcal{N}(0,I)\) 到数据 \(x_1\sim p_{data}\) 的传输。A2A 则把 source 和 target 换成：
+普通 Flow Matching 通常学习从噪声 $x_0\sim \mathcal{N}(0,I)$ 到数据 $x_1\sim p_{data}$ 的传输。A2A 则把 source 和 target 换成：
 
 * source：历史动作 latent $z_0$
 * target：未来动作 latent $z_1$
 
 它使用线性路径：
 
-\[
+$$
 z_\tau = (1-\tau)z_0+\tau z_1
-\]
+$$
 
 目标速度是：
 
-\[
+$$
 z_1-z_0
-\]
+$$
 
-模型 \(f_\theta(z_\tau,\tau,c)\) 学习在视觉条件 \(c\) 下，从历史动作 latent 走向未来动作 latent 的速度场。对应的 Flow Matching loss 是：
+模型 $f_\theta(z_\tau,\tau,c)$ 学习在视觉条件 $c$ 下，从历史动作 latent 走向未来动作 latent 的速度场。对应的 Flow Matching loss 是：
 
-\[
-L_{FM}
-=
-\left\|
-f_\theta(z_\tau,\tau,c)-(z_1-z_0)
-\right\|^2
-\]
+$$
+L_{FM} = \left\| f_\theta(z_\tau,\tau,c)-(z_1-z_0) \right\|^2
+$$
 
 Flow Matching Loss 学习的是“**最近执行过的动作趋势应该怎么延续和调整成未来动作**”。
 
@@ -107,11 +103,9 @@ Flow Matching Loss 学习的是“**最近执行过的动作趋势应该怎么�
 
 为了保证 action encoder 能**保留原始动作 chunk 的结构信息**，同时 action decoder 能**准确重构动作**，论文使用 action autoencoder reconstruction loss：
 
-\[
-L_{AE}
-=
-\|a_{>t}-D_a(E_a(a_{>t}))\|_1
-\]
+$$
+L_{AE} = \|a_{>t}-D_a(E_a(a_{>t}))\|_1
+$$
 
 其中 $E_a$ 和 $D_a$ 分别表示 action encoder 和 action decoder。
 
@@ -119,29 +113,25 @@ L_{AE}
 
 A2A 还加入了 inference consistency loss，用来**对齐 ODE 推理得到的 latent 和真实未来动作 latent**，同时也**约束解码后的动作接近真实 future action**。对应损失是：
 
-\[
-L_{IC}
-=
-\|\hat{z}_1-E_a(a_{>t})\|_1
-+
-\lambda_0\|D_a(\hat{z}_1)-a_{>t}\|_1
-\]
+$$
+L_{IC} = \|\hat{z}_1-E_a(a_{>t})\|_1 + \lambda_0\|D_a(\hat{z}_1)-a_{>t}\|_1
+$$
 
 > **Flow Matching Loss 和 Inference Consistency Loss 确实有相关性，但侧重点不同**：前者是在随机中间时间 $\tau$ 上做“点”级别的速度场监督，后者则是检查经过完整 ODE 推理后的最终结果是否真的对齐目标 latent 和真实动作。前者只保证每个局部速度点学得对，后者约束“这些局部速度经过推理组合起来以后，最终结果也要对”。
 
-> $L_{FM}$ 是在随机中间时间 $\tau$ 上做点级别的速度场监督：给定 $z_\tau$，让 Flow Net 预测从历史动作 latent $z_0$ 到未来动作 latent $z_1$ 的方向，也就是学“**历史动作趋势如何延续到未来动作**”。$L_{AE}$ 是保证 action encoder / decoder 能**保留动作结构**并**准确重构动作**。$L_{IC}$ 则是把模型真实推理后的结果 $\hat z_1$ 拿出来，要求它**在 latent space 接近 $E_a(a_{>t})$**，并且**解码后接近真实 future action**。
+> $L_{FM}$ 是在随机中间时间 $\tau$ 上做点级别的速度场监督：给定 $z_\tau$ ，让 Flow Net 预测从历史动作 latent $z_0$ 到未来动作 latent $z_1$ 的方向，也就是学“**历史动作趋势如何延续到未来动作**”。 $L_{AE}$ 是保证 action encoder / decoder 能**保留动作结构**并**准确重构动作**。 $L_{IC}$ 则是把模型真实推理后的结果 $\hat z_1$ 拿出来，要求它**在 latent space 接近 $E_a(a_{>t})$**，并且**解码后接近真实 future action**。
 
 ---
 
 ### 三. 训练流程
 
-> 输入：历史动作 $a_{≤t}$、历史视觉观测 $I_{≤t}$、未来动作 $a_{>t}$
+> 输入：历史动作 $a_{≤t}$ 、历史视觉观测 $I_{≤t}$ 、未来动作 $a_{>t}$
 
-1. 视觉编码：$I_{≤t}$ $\rightarrow$ ResNet-18 + MLP $\rightarrow$ condition $c$
+1. 视觉编码： $I_{≤t}$ $\rightarrow$ ResNet-18 + MLP $\rightarrow$ condition $c$
 
-2. 历史动作编码：$a_{≤t}$ $\rightarrow$ action encoder $E_a$ $\rightarrow$ source latent $z_0$
+2. 历史动作编码： $a_{≤t}$ $\rightarrow$ action encoder $E_a$ $\rightarrow$ source latent $z_0$
 
-3. 未来动作编码：$a_{>t}$ $\rightarrow$ action encoder $E_a$ $\rightarrow$ target latent $z_1$
+3. 未来动作编码： $a_{>t}$ $\rightarrow$ action encoder $E_a$ $\rightarrow$ target latent $z_1$
 
 4. Flow Matching：
    1. 采样 $τ ∈ [0,1]$
@@ -156,12 +146,12 @@ L_{IC}
 
 6. Inference consistency：
    1. 用 Flow Net 从 $z_0$ 推理得到 $\hat{z}_1$
-   2. 要求 $\hat{z}_1$ 接近 $E_a(a_{>t})$，$D_a(\hat{z}_1)$ 接近 $a_{>t}$
+   2. 要求 $\hat{z}_1$ 接近 $E_a(a_{>t})$ ， $D_a(\hat{z}_1)$ 接近 $a_{>t}$
    3. 计算 $L_{IC}$
 
-7. 总 loss：$L_{total} = λ_1 L_{FM} + λ_2 L_{AE} + λ_3 L_{IC}$
+7. 总 loss： $L_{total} = λ_1 L_{FM} + λ_2 L_{AE} + λ_3 L_{IC}$
 
-> 论文中统一使用的主要超参数包括：$λ_1 = 1, λ_2 = 0.5, λ_3 = 1$, batch size = 32
+> 论文中统一使用的主要超参数包括： $λ_1 = 1, λ_2 = 0.5, λ_3 = 1$ , batch size = 32
 
 ---
 
@@ -175,11 +165,11 @@ L_{IC}
 
 3. 编码视觉条件 $I_{≤t} → c \in 512$
 
-4. 编码历史动作：$a_{≤t} → z_0 \in 512$
+4. 编码历史动作： $a_{≤t} → z_0 \in 512$
 
 5. 从 $z_0$ 出发，通过 Flow Net 推理得到未来 latent $\hat{z}_1 \in 512$
 
-6. 用 action decoder 解码：$\hat{z}_1 →$ future action chunk $\in n \times 9$
+6. 用 action decoder 解码： $\hat{z}_1 →$ future action chunk $\in n \times 9$
 
 ---
 
@@ -262,7 +252,7 @@ L_{IC}
    
 4. **任务范围仍偏连续控制**：论文虽然包含仿真和真实 Franka 任务，但主要还是较平滑的 manipulation。对于长程、多阶段、强语义任务，还需要进一步验证。
    
-5. **损失权重需要手动调节**：A2A 的总目标包含 \(L_{FM}\)、\(L_{AE}\)、\(L_{IC}\)，权重需要人工设定。论文也将 adaptive loss weighting 留作未来工作。
+5. **损失权重需要手动调节**：A2A 的总目标包含 $L_{FM}$ 、 $L_{AE}$ 、 $L_{IC}$ ，权重需要人工设定。论文也将 adaptive loss weighting 留作未来工作。
 
 ---
 

@@ -47,9 +47,9 @@ $$
 
 其中：
 
-- $p_t \in \mathbb{R}^3$：end-effector 位置；
-- $R_t \in SO(3)$：夹爪姿态；
-- $w_t \in \mathbb{R}_{\ge 0}$：夹爪宽度。
+- $p_t \in \mathbb{R}^3$ ：end-effector 位置；
+- $R_t \in SO(3)$ ：夹爪姿态；
+- $w_t \in \mathbb{R}_{\ge 0}$ ：夹爪宽度。
 
 由于机器人平行夹爪只有两片夹爪，而人手有多根手指，作者先从 MANO hand keypoints 中提取手指三维关键点，并用食指和中指构造一个 **“虚拟手指”**：
 
@@ -87,8 +87,8 @@ $$
 
 其中：
 
-- $d = k_{\text{vf}} - k_{\text{wrist}}$；$s=+1$ 表示右手，$s=-1$ 表示左手；
-- $z$ 是夹爪两指连线方向；$y$ 是夹爪平面的法向；
+- $d = k_{\text{vf}} - k_{\text{wrist}}$ ； $s=+1$ 表示右手， $s=-1$ 表示左手；
+- $z$ 是夹爪两指连线方向； $y$ 是夹爪平面的法向；
 
 > 这个符号翻转 $s$ 很重要，因为左右手天然镜像。如果不做统一，左右手的同类抓取动作会在坐标上方向相反，导致模型学到冲突信号。
 
@@ -102,18 +102,11 @@ $$
 
    > base pose 搜索可以写成：
    >
-   > $$
-   > T_{\text{base}}^*
-   > =
-   > \arg\max_{T_{\text{base}}}
-   > \frac{1}{|\mathcal{K}|}
-   > \sum_{k \in \mathcal{K}}
-   > \mathbb{1}
-   > \left[
-   > IK(T_{\text{base}}^{-1}T^{ee}_k)
-   > \text{ is feasible}
-   > \right]
-   > $$
+
+$$
+T_{\text{base}}^* = \arg\max_{T_{\text{base}}} \frac{1}{|\mathcal{K}|} \sum_{k \in \mathcal{K}} \mathbb{1} \left[ IK(T_{\text{base}}^{-1}T^{ee}_k) \text{ is feasible} \right]
+$$
+
    >
    > 其中 $\mathcal{K}$ 是覆盖轨迹空间极值的关键帧集合。这个目标的意思是：寻找一个机器人底座位置，使尽可能多的关键末端位姿可以被机器人 IK 到达。
 4. 在 MuJoCo 中用 IK 跟踪 retarget 后的末端轨迹并渲染机器人；
@@ -121,24 +114,25 @@ $$
 
    > 深度合成公式为：
    >
-   > $$
-   > M^{occ}_t = \mathbb{1}[D^{robot}_t \leq D_t]
-   > $$
+
+$$
+M^{occ}_t = \mathbb{1}[D^{robot}_t \leq D_t]
+$$
+
    >
-   > $$
-   > I^{syn}_t =
-   > M^{occ}_t \odot I^{robot}_t
-   > +
-   > (1-M^{occ}_t) \odot \hat{I}_t
-   > $$
+
+$$
+I^{syn}_t = M^{occ}_t \odot I^{robot}_t + (1-M^{occ}_t) \odot \hat{I}_t
+$$
+
    >
    > 其中：
    >
-   > - $D^{robot}_t$：机器人深度；
-   > - $D_t$：原场景深度；
-   > - $M^{occ}_t$：机器人是否在当前像素前景的遮挡 mask。
-   > - $I^{robot}_t$：渲染出的机器人图像；
-   > - $\hat{I}_t$：去除人手后的背景图像；
+   > - $D^{robot}_t$ ：机器人深度；
+   > - $D_t$ ：原场景深度；
+   > - $M^{occ}_t$ ：机器人是否在当前像素前景的遮挡 mask。
+   > - $I^{robot}_t$ ：渲染出的机器人图像；
+   > - $\hat{I}_t$ ：去除人手后的背景图像；
 
 ##### B. Multi-stage Data Curation
 
@@ -150,11 +144,11 @@ Qwen-RobotManip 很强调数据清洗，因为机器人数据中的错误不是�
 
 Qwen-RobotManip 的主结构是一个解耦式 VLA：
 
-* **Vision-language backbone** 使用 Qwen3.5-4B。它把多视角图像 token 和文本 token 放在同一个 Transformer 中做 early vision-language fusion，输出最后一层 hidden states，维度为 $D_{vlm}=2560$。
+* **Vision-language backbone** 使用 Qwen3.5-4B。它把多视角图像 token 和文本 token 放在同一个 Transformer 中做 early vision-language fusion，输出最后一层 hidden states，维度为 $D_{vlm}=2560$ 。
 
 * **Action expert** 是一个 flow-matching DiT：
 
-  - Transformer block $N=10$，hidden dimension $D_{act}=768$，attention heads：12；
+  - Transformer block $N=10$ ，hidden dimension $D_{act}=768$ ，attention heads：12；
 
   - 输入：当前 proprioceptive state token + noisy action tokens；
 
@@ -247,9 +241,9 @@ $$
 
 其中：
 
-- $o_h$：历史视觉观测；
-- $s_h$：历史 proprioceptive state；
-- $a_h$：历史执行的 action chunk。
+- $o_h$ ：历史视觉观测；
+- $s_h$ ：历史 proprioceptive state；
+- $a_h$ ：历史执行的 action chunk。
 
 这些历史片段告诉模型：“这个机器人刚刚看到了什么、处于什么状态、执行了什么动作、执行效果大概如何”。这些 context tokens 会和当前图像、语言、structured prompt 一起送入 VLM。这样 VLM 可以把历史执行行为当作一种 implicit embodiment identifier。
 
@@ -279,18 +273,7 @@ $$
 masked flow matching loss 为：
 
 $$
-\mathcal{L}_{FM}
-=
-\frac{1}{B}
-\sum_{i=1}^{B}
-\frac{
-\sum_{t,j} m_{i,t,j}
-\left(
-f_\theta(x_{i,t}, t_i, s_i, o_i)_j - v_{i,t,j}
-\right)^2
-}{
-\sum_{t,j}m_{i,t,j}
-}
+\mathcal{L}_{FM} = \frac{1}{B} \sum_{i=1}^{B} \frac{ \sum_{t,j} m_{i,t,j} \left( f_\theta(x_{i,t}, t_i, s_i, o_i)_j - v_{i,t,j} \right)^2 }{ \sum_{t,j}m_{i,t,j} }
 $$
 
 这个 per-sample normalization 很重要，因为不同 embodiment 的有效维度数量不同。如果不归一化，双臂机器人或灵巧手机器人会因为有效维度更多而在训练中占据更大权重。
@@ -300,22 +283,13 @@ $$
 对于 VL batch，模型使用标准 next-token prediction loss：
 
 $$
-\mathcal{L}_{VLM}
-=
--
-\mathbb{E}
-\sum_i
-\log p_\phi(y_i \mid y_{<i}, c)
+\mathcal{L}_{VLM} = - \mathbb{E} \sum_i \log p_\phi(y_i \mid y_{<i}, c)
 $$
 
 ##### C. Total Loss
 
 $$
-\mathcal{L}
-=
-\mathcal{L}_{FM}
-+
-0.1 \mathcal{L}_{VLM}
+\mathcal{L} = \mathcal{L}_{FM} + 0.1 \mathcal{L}_{VLM}
 $$
 
 #### 推理

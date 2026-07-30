@@ -38,9 +38,9 @@ $$
 
 其中：
 
-- $o_t$：第 $t$ 步的观测；
-- $a_t$：第 $t$ 步的连续动作；
-- $T$：轨迹长度。
+- $o_t$ ：第 $t$ 步的观测；
+- $a_t$ ：第 $t$ 步的连续动作；
+- $T$ ：轨迹长度。
 
 标准 behavior cloning 通常把每个时间步都看成一样的监督点，让模型在每个 $t$ 上预测**下一步动作**或**从 $t+1$ 开始的 action chunk**。
 
@@ -86,13 +86,14 @@ MSK 的作用是：根据动作信号本身的**局部复杂度**，自动找出
 $$
 \text{key segment = 频谱高频片段 ∪ 几何弯折片段 ∪ 启发式关键点邻域}
 $$
+
 剩下的时间步就是 skip segment。
 
 > MSK 的特点是：不需要人工标注，不需要训练额外模型，**只依赖动作序列本身**，因此比较**轻量**、**任务无关**。
 
 ##### C. Action Relabeling（动作重标注）
 
-Action relabeling 是 SkiP 的核心机制。假设一条轨迹已经被划分为若干个 segment。对任意时间步 $t$，可以判断它属于：
+Action relabeling 是 SkiP 的核心机制。假设一条轨迹已经被划分为若干个 segment。对任意时间步 $t$ ，可以判断它属于：
 
 - **key segment**：需要 refine；
 - **skip segment**：可以 skip。
@@ -190,7 +191,7 @@ SkiP 在多个 benchmark、多个 policy backbone 和多个 observation modality
 
 ##### B. 研究问题二：SkiP 是否能迁移到不同 policy backbone？
 
-- **实验设置**：在 RoboMimic 上使用 Diffusion Policy UNet，在 RoboTwin 上使用 DP3，在 real-robot 设置中微调 $π_{0.5}$。
+- **实验设置**：在 RoboMimic 上使用 Diffusion Policy UNet，在 RoboTwin 上使用 DP3，在 real-robot 设置中微调 $π_{0.5}$ 。
 
 - **实验结论**：SkiP 在不同架构上都能带来收益，说明它**不是依赖某个特定模型结构**，而是依赖更通用的动作监督重标注思想。尤其在 RoboMimic 中，SkiP 在平均 SR 上超过 CoA-rev，并在困难任务 `square` 上提升明显，同时减少成功 episode 中的执行步数。
 

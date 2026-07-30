@@ -61,8 +61,8 @@ $$
 
 其中：
 
-- $K$ 是希望保留的视觉 token 数量，$K << H × W$；
-- $σ$ 是 sigmoid 函数，约束结果落在 $[0,1]$，保证坐标落在图像范围内；
+- $K$ 是希望保留的视觉 token 数量， $K << H × W$ ；
+- $σ$ 是 sigmoid 函数，约束结果落在 $[0,1]$ ，保证坐标落在图像范围内；
 - **每个坐标表示模型希望从 dense feature map 中采样的位置**。
 
 直观理解：
@@ -73,7 +73,7 @@ $$
 
 传统 token pruning 是从固定 patch 网格中选 token，例如选第 5 个、第 18 个 patch。
 
-GridS 则预测连续坐标，例如 $(x, y) = (5.3, 7.6)$，**这个位置通常不正好落在某个整数 patch 上**。
+GridS 则预测连续坐标，例如 $(x, y) = (5.3, 7.6)$ ，**这个位置通常不正好落在某个整数 patch 上**。
 
 因此，GridS 使用 **bilinear interpolation** 从周围四个 patch 中加权采样：
 
@@ -108,9 +108,9 @@ $$
 
 其中：
 
-- $F_{spa}$：通过 bilinear sampling 得到的视觉特征；
-- $E_{pos}$：坐标位置编码；
-- $T_{spa}$：最终输入下游 Transformer 的 sparse visual tokens。
+- $F_{spa}$ ：通过 bilinear sampling 得到的视觉特征；
+- $E_{pos}$ ：坐标位置编码；
+- $T_{spa}$ ：最终输入下游 Transformer 的 sparse visual tokens。
 
 直观理解：
 

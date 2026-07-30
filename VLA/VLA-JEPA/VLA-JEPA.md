@@ -47,9 +47,9 @@ $$
 
 其中：
 
-* $O_v = (I_{v, t_0}, I_{v, t_1}, …, I_{v, t_n})$：第 $v$ 个视角下的视频序列，由多个时间步的图像帧组成。
+* $O_v = (I_{v, t_0}, I_{v, t_1}, …, I_{v, t_n})$ ：第 $v$ 个视角下的视频序列，由多个时间步的图像帧组成。
 
-- $\ell$：语言指令；
+- $\ell$ ：语言指令；
 
 ##### A.1 World State Encoder
 
@@ -78,6 +78,7 @@ $$
 这里的 $z_{t_i}$ 可以理解为第 $i$ 个 latent action token。举个例子：
 
 随后，latent world model 接收历史 state 和这些 latent action，预测未来 state：
+
 $$
 \hat{s}_{t_{1:i+1}} = p^{WM}_{\theta}(s_{t_{0:i}}, z_{t_{0:i}})
 $$
@@ -137,11 +138,7 @@ latent world model 使用 time-causal attention：
 VLA-JEPA 在 latent space 中对齐预测 state 和 target state：
 
 $$
-\mathcal{L}_{WM}
-=
-\sum_{k=1}^{T}
-\mathbb{E}_{s_{t_k} \sim F(\cdot)}
-(\hat{s}_{t_k} - s_{t_k})
+\mathcal{L}_{WM} = \sum_{k=1}^{T} \mathbb{E}_{s_{t_k} \sim F(\cdot)} (\hat{s}_{t_k} - s_{t_k})
 $$
 
 公式可以简单理解为：
@@ -158,7 +155,7 @@ $$
 
 ##### B.1 Action Token Conditioning
 
-在机器人数据阶段，模型会在 `<latent_i>` tokens 后面加入 `<action>` tokens。VLM 接收初始图像、语言指令、`<latent_i>` tokens 和 `<action>` tokens。`<latent_i>` tokens 对应位置的输出 hidden states 被用作 latent action，送入 latent world model；`<action>` token 对应位置的输出 hidden state 被记为 $z_a$，作为 flow-matching action head 的条件，用于生成真实机器人动作：
+在机器人数据阶段，模型会在 `<latent_i>` tokens 后面加入 `<action>` tokens。VLM 接收初始图像、语言指令、`<latent_i>` tokens 和 `<action>` tokens。`<latent_i>` tokens 对应位置的输出 hidden states 被用作 latent action，送入 latent world model；`<action>` token 对应位置的输出 hidden state 被记为 $z_a$ ，作为 flow-matching action head 的条件，用于生成真实机器人动作：
 
 $$
 z_a = p^{VLM}_{\theta}(\{I_{i,t_0}\}_{i=0}^{v}, \ell, \langle latent_i \rangle, \langle action \rangle)
@@ -166,7 +163,7 @@ $$
 
 ##### B.2 Conditional Flow-Matching Action Head
 
-VLA-JEPA 的动作头使用 conditional flow matching。给定 ground-truth action sequence $a_{0:H}$ 和高斯噪声 $\epsilon$，定义插值：
+VLA-JEPA 的动作头使用 conditional flow matching。给定 ground-truth action sequence $a_{0:H}$ 和高斯噪声 $\epsilon$ ，定义插值：
 
 $$
 a_t = (1-t)\epsilon + t a_{0:H}, \quad t \sim U(0,1)
@@ -181,12 +178,7 @@ $$
 训练目标是让预测速度接近从噪声到真实动作的目标速度：
 
 $$
-\mathcal{L}_{FM}
-=
-\mathbb{E}_{a_{0:H}, \epsilon, t}
-\left[
-\|v_{\theta}(a_t, t \mid z_a) - (a_{0:H} - \epsilon)\|_2^2
-\right]
+\mathcal{L}_{FM} = \mathbb{E}_{a_{0:H}, \epsilon, t} \left[ \|v_{\theta}(a_t, t \mid z_a) - (a_{0:H} - \epsilon)\|_2^2 \right]
 $$
 
 推理时，从随机噪声开始，通过 flow integration 逐步生成动作轨迹。
@@ -196,18 +188,14 @@ $$
 对于带动作标签的机器人数据，总训练目标为：
 
 $$
-\mathcal{L}
-=
-\mathcal{L}_{FM}
-+
-\beta \mathcal{L}_{WM}
+\mathcal{L} = \mathcal{L}_{FM} + \beta \mathcal{L}_{WM}
 $$
 
 其中：
 
-- $\mathcal{L}_{FM}$：负责真实动作预测；
-- $\mathcal{L}_{WM}$：继续保持 latent state transition prediction；
-- $\beta$：控制 world modeling loss 的权重。
+- $\mathcal{L}_{FM}$ ：负责真实动作预测；
+- $\mathcal{L}_{WM}$ ：继续保持 latent state transition prediction；
+- $\beta$ ：控制 world modeling loss 的权重。
 
 ---
 
@@ -361,7 +349,7 @@ VLA-JEPA 的训练可以理解为两阶段：
 
 #### F. 研究问题六：future video horizon 如何影响效果？
 
-**实验设置**：比较未来视频长度 $T \in \{4, 8, 16\}$。
+**实验设置**：比较未来视频长度 $T \in \{4, 8, 16\}$ 。
 
 **实验结果**：
 
@@ -371,7 +359,7 @@ VLA-JEPA 的训练可以理解为两阶段：
 | 8 | 94.8 | 99.8 | 95.8 | 94.0 | 96.1 |
 | 16 | 92.8 | 98.8 | 98.0 | 92.2 | 95.5 |
 
-**实验结论**：$T=8$ 效果最好。未来 horizon 太短时，动态信息不足，尤其影响 long-horizon 任务；horizon 太长时，会引入冗余信息，在需要精细操作的 spatial 任务上反而变差。
+**实验结论**： $T=8$ 效果最好。未来 horizon 太短时，动态信息不足，尤其影响 long-horizon 任务；horizon 太长时，会引入冗余信息，在需要精细操作的 spatial 任务上反而变差。
 
 ---
 

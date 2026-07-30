@@ -26,10 +26,9 @@
 ![model](./images/model.png)
 
 ReactVLA 在每个闭环控制周期输入：多视角 RGB 图像、自然语言任务指令、机器人状态，然后生成未来的 action chunk：
+
 $$
-a_{t:t+H}\sim \pi_\theta(\cdot\mid o_t),
-\qquad
-o_t=\{I_t,s_t,l\}.
+a_{t:t+H}\sim \pi_\theta(\cdot\mid o_t), \qquad o_t=\{I_t,s_t,l\}.
 $$
 
 论文使用：
@@ -38,21 +37,15 @@ $$
 - 视觉编码器：冻结的 SigLip2；
 - 语言编码器：SmolVLM 的 text encoder；
 - proprioception：8 维 robot state，经线性层编码为一个 state token；
-- observation horizon：$n_{obs}=1$。
-- action horizon：$H=16$；
-- action dimension：$d_a=7$；
+- observation horizon： $n_{obs}=1$ 。
+- action horizon： $H=16$ ；
+- action dimension： $d_a=7$ ；
 - 每轮执行前 $K=8$ 个动作；
 
 多模态条件 token 记为：
 
 $$
-C=
-[
-E_{vis}(I_{agent}),
-E_{vis}(I_{wrist}),
-E_{text}(l),
-E_{prop}(s_t)
-].
+C= [ E_{vis}(I_{agent}), E_{vis}(I_{wrist}), E_{text}(l), E_{prop}(s_t) ].
 $$
 
 Action Transformer 的完整输入序列为：
@@ -64,12 +57,12 @@ $$
 其中：
 
 - $t$ 是当前噪声时间；
-- $r$ 是希望生成到的目标时间，满足 $r\le t$；
+- $r$ 是希望生成到的目标时间，满足 $r\le t$ ；
 - $\phi(r),\phi(t)$ 是 sinusoidal(正弦) time embedding；
 - $z_t\in\mathbb R^{H\times d_a}$ 是当前 noisy action trajectory；
 - 多模态条件和 noisy action 都投影到 hidden dimension 768。
 
-> **简单理解**：视觉、语言和机器人状态告诉模型“当前任务是什么、场景是什么”；$z_t,r,t$ 告诉 action head“当前 action 有多噪，以及这一步要从哪个时间走到哪个目标时间”。
+> **简单理解**：视觉、语言和机器人状态告诉模型“当前任务是什么、场景是什么”； $z_t,r,t$ 告诉 action head“当前 action 有多噪，以及这一步要从哪个时间走到哪个目标时间”。
 
 ---
 
@@ -79,14 +72,14 @@ $$
 
 #### 1. Flow Matching 的 action probability path
 
-设真实 action chunk 为 $x$，Gaussian noise 为 $e$。ReactVLA 使用线性 probability path：
+设真实 action chunk 为 $x$ ，Gaussian noise 为 $e$ 。ReactVLA 使用线性 probability path：
 
 $$
-z_t=(1-t)x+te,
-\qquad t\in[0,1].
+z_t=(1-t)x+te, \qquad t\in[0,1].
 $$
 
 训练时的 conditional velocity target 为：
+
 $$
 v_g=\frac{dz_t}{dt}=e-x.
 $$
@@ -103,14 +96,10 @@ $$
 
 #### 2. MeanFlow：预测区间平均速度
 
-ReactVLA 不只输入当前时间 $t$，还输入目标时间 $r$，让网络预测区间 $[r,t]$ 的平均速度：
+ReactVLA 不只输入当前时间 $t$ ，还输入目标时间 $r$ ，让网络预测区间 $[r,t]$ 的平均速度：
 
 $$
-u(z_t,r,t)
-=
-\frac{1}{t-r}
-\int_r^t v(z_\tau,\tau)d\tau,
-\qquad 0\le r<t\le1.
+u(z_t,r,t) = \frac{1}{t-r} \int_r^t v(z_\tau,\tau)d\tau, \qquad 0\le r<t\le1.
 $$
 
 从当前状态 $z_t$ 生成到更干净的 $z_r$ 时，更新为：
@@ -144,45 +133,29 @@ $$
 于是：
 
 $$
-u(z_t,r,t)
-=
-v(z_t,t)
--
-(t-r)\frac{d}{dt}u(z_t,r,t).
+u(z_t,r,t) = v(z_t,t) - (t-r)\frac{d}{dt}u(z_t,r,t).
 $$
 
-由于 $u$ 不仅显式依赖时间 $t$，还通过 $z_t$ 隐式依赖 $t$，因此总导数为：
+由于 $u$ 不仅显式依赖时间 $t$ ，还通过 $z_t$ 隐式依赖 $t$ ，因此总导数为：
 
 $$
-\frac{d}{dt}u(z_t,r,t)
-=
-\frac{\partial u}{\partial z_t}v(z_t,t)
-+
-\frac{\partial u}{\partial t}.
+\frac{d}{dt}u(z_t,r,t) = \frac{\partial u}{\partial z_t}v(z_t,t) + \frac{\partial u}{\partial t}.
 $$
 
 这个总导数可以写成 JVP：
 
 $$
-\frac{d}{dt}u(z_t,r,t)
-=
-\operatorname{JVP}
-\left(
- u;
- (v(z_t,t),0,1)
-\right).
+\frac{d}{dt}u(z_t,r,t) = \mathrm{JVP} \left( u; (v(z_t,t),0,1) \right).
 $$
 
-其中 tangent direction $(v,0,1)$ 表示：$z_t$ 沿瞬时速度 $v$ 变化、$r$ 保持不变、$t$ 以速度 1 变化。
+其中 tangent direction $(v,0,1)$ 表示： $z_t$ 沿瞬时速度 $v$ 变化、 $r$ 保持不变、 $t$ 以速度 1 变化。
 
 #### 4. iMF 的训练形式
 
 ReactVLA 使用同一个网络 $u_\theta$ 表示平均速度，并令：
 
 $$
-v_\theta(z_t,t)
-=
-u_\theta(z_t,t,t).
+v_\theta(z_t,t) = u_\theta(z_t,t,t).
 $$
 
 当 $r=t$ 时，区间长度收缩到零，平均速度退化为瞬时速度。
@@ -190,23 +163,13 @@ $$
 接着计算：
 
 $$
-\dot u_\theta
-=
-\operatorname{JVP}
-\left(
- u_\theta;
- (v_\theta,0,1)
-\right),
+\dot u_\theta = \mathrm{JVP} \left( u_\theta; (v_\theta,0,1) \right),
 $$
 
 并构造 corrected instantaneous velocity prediction：
 
 $$
-V_\theta(z_t,r,t)
-=
-u_\theta(z_t,r,t)
-+
-(t-r)\operatorname{sg}(\dot u_\theta).
+V_\theta(z_t,r,t) = u_\theta(z_t,r,t) + (t-r)\mathrm{sg}(\dot u_\theta).
 $$
 
 最后让 $V_\theta$ 回归已知的 conditional instantaneous velocity：
@@ -217,16 +180,16 @@ $$
 
 这体现了 iMF 的核心思想：
 
-> **网络输出空间是 average velocity $u_\theta$，但监督目标位于 instantaneous velocity space。**
+> **网络输出空间是 average velocity $u_\theta$ ，但监督目标位于 instantaneous velocity space。**
 
-与原始 MeanFlow 相比，训练 target 不再把网络自身预测直接当成回归目标，而是回归已知的 $e-x$，因此更接近标准监督回归问题。
+与原始 MeanFlow 相比，训练 target 不再把网络自身预测直接当成回归目标，而是回归已知的 $e-x$ ，因此更接近标准监督回归问题。
 
 #### 5. ReactVLA 的时间采样
 
-训练时，ReactVLA 从 Logit-Normal distribution（先从普通高斯分布中采样，再通过 sigmoid 将结果压缩到 $(0,1)$）中分别采样 $r,t$：
+训练时，ReactVLA 从 Logit-Normal distribution（先从普通高斯分布中采样，再通过 sigmoid 将结果压缩到 $(0,1)$ ）中分别采样 $r,t$ ：
 
 $$
-r,t\sim\operatorname{LogitNormal}(\mu=-0.4,\sigma=1.0),
+r,t\sim\mathrm{LogitNormal}(\mu=-0.4,\sigma=1.0),
 $$
 
 然后排序，使：
@@ -247,7 +210,7 @@ $$
 
 #### 6. Action-space 的具体处理
 
-ReactVLA 直接在**归一化的连续动作轨迹空间 $x\in\mathbb R^{16\times7} $** 中训练，不使用额外 action tokenizer 或 latent action encoder，训练和生成过程都在归一化后的 action space 中完成，最终输出再 unnormalize 为机器人原生控制命令。
+ReactVLA 直接在**归一化的连续动作轨迹空间 $x\in\mathbb R^{16\times7}$** 中训练，不使用额外 action tokenizer 或 latent action encoder，训练和生成过程都在归一化后的 action space 中完成，最终输出再 unnormalize 为机器人原生控制命令。
 
 因此，ReactVLA 对 iMF 的 action adaptation 本身相对直接，主要变化是：
 
@@ -280,61 +243,53 @@ $$
 #### 2. AttnRes 的动态深度路由
 
 ReactVLA 的 AttnRes 会缓存前面各层的输出。对于第 $l$ 层，它不再只接收第 $l-1$ 层，而是**从所有历史表示中加权选择**：
+
 $$
-h_l=
-\sum_{i=0}^{l-1}\alpha_{i\rightarrow l}v_i,
-\qquad
-\sum_{i=0}^{l-1}\alpha_{i\rightarrow l}=1.
+h_l= \sum_{i=0}^{l-1}\alpha_{i\rightarrow l}v_i, \qquad \sum_{i=0}^{l-1}\alpha_{i\rightarrow l}=1.
 $$
+
 其中：
 
-- $v_i$：Transformer 第 $i$ 个历史层产生的 hidden representation；
-- $\alpha_{i\rightarrow l}$：第 $l$ 层分配给第 $i$ 个历史表示的权重；
-- $h_l$：送入第 $l$ 层的融合表示。
+- $v_i$ ：Transformer 第 $i$ 个历史层产生的 hidden representation；
+- $\alpha_{i\rightarrow l}$ ：第 $l$ 层分配给第 $i$ 个历史表示的权重；
+- $h_l$ ：送入第 $l$ 层的融合表示。
 
 权重通过 layer-specific learnable query 得到：
 
 $$
-e_{i\rightarrow l}
-=
-w_l^\top\operatorname{RMSNorm}(v_i),
+e_{i\rightarrow l} = w_l^\top\mathrm{RMSNorm}(v_i),
 $$
 
 $$
-\alpha_{i\rightarrow l}
-=
-\frac{\exp(e_{i\rightarrow l})}
-{\sum_{j=0}^{l-1}\exp(e_{j\rightarrow l})}.
+\alpha_{i\rightarrow l} = \frac{\exp(e_{i\rightarrow l})} {\sum_{j=0}^{l-1}\exp(e_{j\rightarrow l})}.
 $$
 
 > **RMSNorm 是什么？**
 >
 > 对于一个 hidden vector：
-> $$
-> x=[x_1,x_2,\dots,x_d]\in\mathbb R^d,
-> $$
+
+$$
+x=[x_1,x_2,\dots,x_d]\in\mathbb R^d,
+$$
+
 > RMSNorm 首先计算均方根：
-> $$
-> \operatorname{RMS}(x)
-> =
-> \sqrt{
-> \frac{1}{d}\sum_{j=1}^{d}x_j^2+\epsilon
-> }.
-> $$
-> 然后归一化并乘以可学习的缩放参数 $\gamma$：
-> $$
-> \operatorname{RMSNorm}(x)
-> =
-> \gamma\odot
-> \frac{x}
-> {\sqrt{
-> \frac{1}{d}\sum_{j=1}^{d}x_j^2+\epsilon
-> }}.
-> $$
+
+$$
+\mathrm{RMS}(x) = \sqrt{ \frac{1}{d}\sum_{j=1}^{d}x_j^2+\epsilon }.
+$$
+
+> 然后归一化并乘以可学习的缩放参数 $\gamma$ ：
+
+$$
+\mathrm{RMSNorm}(x) = \gamma\odot \frac{x} {\sqrt{ \frac{1}{d}\sum_{j=1}^{d}x_j^2+\epsilon }}.
+$$
+
 > ReactVLA 中：
-> $$
-> d=768,\qquad \epsilon=10^{-6}.
-> $$
+
+$$
+d=768,\qquad \epsilon=10^{-6}.
+$$
+
 > **RMSNorm 归一化可以避免某个历史层仅仅因为 hidden vector 数值幅度较大，就获得更高的路由分数**。这样更多反映表示的方向和内容是否重要，而不是它的绝对数值大小。
 
 简单理解：
@@ -354,76 +309,67 @@ ReactVLA 的 action backbone 包含 16 个 AttnRes Transformer blocks，hidden s
   > **第一步：给不同维度设置不同频率**
   >
   > 将每个 attention head 的 96 个维度两两分组：
-  > $$
-  > (0,1),(2,3),\dots,(94,95).
-  > $$
+
+$$
+(0,1),(2,3),\dots,(94,95).
+$$
+
   > 第 $k$ 组的旋转频率为：
-  > $$
-  > \omega_k
-  > =
-  > \frac{1}{B^{2k/d_h}}
-  > =
-  > 10000^{-2k/96},
-  > \qquad
-  > k=0,1,\dots,47.
-  > $$
+
+$$
+\omega_k = \frac{1}{B^{2k/d_h}} = 10000^{-2k/96}, \qquad k=0,1,\dots,47.
+$$
+
   > **第二步：根据 token 位置计算旋转角**
   >
-  > 假设当前 token 的序列位置为 $p$，那么第 $k$ 组维度的旋转角度为：
-  > $$
-  > \theta_{p,k}=p\omega_k.
-  > $$
+  > 假设当前 token 的序列位置为 $p$ ，那么第 $k$ 组维度的旋转角度为：
+
+$$
+\theta_{p,k}=p\omega_k.
+$$
+
   > **第三步：旋转 Query 和 Key**
   >
   > 设某个 attention head 中，Query 的第 $k$ 对维度为：
-  > $$
-  > \begin{bmatrix}
-  > q_{2k}\\
-  > q_{2k+1}
-  > \end{bmatrix}.
-  > $$
+
+$$
+\begin{bmatrix} q_{2k}\\ q_{2k+1} \end{bmatrix}.
+$$
+
   > 经过 RoPE 后：
-  > $$
-  > \begin{bmatrix}
-  > q'_{2k}\\
-  > q'_{2k+1}
-  > \end{bmatrix}
-  > =
-  > \begin{bmatrix}
-  > \cos\theta_{p,k} & -\sin\theta_{p,k}\\
-  > \sin\theta_{p,k} & \cos\theta_{p,k}
-  > \end{bmatrix}
-  > \begin{bmatrix}
-  > q_{2k}\\
-  > q_{2k+1}
-  > \end{bmatrix}.
-  > $$
+
+$$
+\begin{bmatrix} q'_{2k}\\ q'_{2k+1} \end{bmatrix} = \begin{bmatrix} \cos\theta_{p,k} & -\sin\theta_{p,k}\\ \sin\theta_{p,k} & \cos\theta_{p,k} \end{bmatrix} \begin{bmatrix} q_{2k}\\ q_{2k+1} \end{bmatrix}.
+$$
+
   > 展开就是：
-  > $$
-  > q'_{2k}
-  > =
-  > q_{2k}\cos\theta_{p,k}
-  > -
-  > q_{2k+1}\sin\theta_{p,k},
-  > $$
+
+$$
+q'_{2k} = q_{2k}\cos\theta_{p,k} - q_{2k+1}\sin\theta_{p,k},
+$$
+
   > Key 也进行相同的旋转：
-  > $$
-  > k'_p=R_p k_p.
-  > $$
+
+$$
+k'_p=R_p k_p.
+$$
+
   > Value 通常不使用 RoPE。
   >
   > **为什么旋转可以表示位置？**
   >
-  > 假设两个 token 的位置分别为 $p$ 和 $q$，旋转后的 attention 内积满足：
-  > $$
-  > (R_pq_p)^\top(R_qk_q)
-  > =
-  > q_p^\top R_{q-p}k_q.
-  > $$
+  > 假设两个 token 的位置分别为 $p$ 和 $q$ ，旋转后的 attention 内积满足：
+
+$$
+(R_pq_p)^\top(R_qk_q) = q_p^\top R_{q-p}k_q.
+$$
+
   > 因此，最终 attention score 自然依赖：
-  > $$
-  > q-p,
-  > $$
+
+$$
+q-p,
+$$
+
   > 也就是两个 token 的**相对位置**，而不是只依赖各自的绝对位置。
 
 - SwiGLU FFN，intermediate dimension 为 2048；
@@ -431,60 +377,52 @@ ReactVLA 的 action backbone 包含 16 个 AttnRes Transformer blocks，hidden s
   > **SwiGLU 不只是一个普通激活函数，而是一种带门控机制的 FFN 结构（Swish-Gated Linear Unit）**。
   >
   > 其中真正的基础激活函数是 SiLU / Swish：
-  > $$
-  > \operatorname{SiLU}(x)
-  > =
-  > x\sigma(x)
-  > =
-  > \frac{x}{1+e^{-x}}.
-  > $$
+
+$$
+\mathrm{SiLU}(x) = x\sigma(x) = \frac{x}{1+e^{-x}}.
+$$
+
   > 对于输入 hidden state：
-  > $$
-  > x\in\mathbb R^{768},
-  > $$
+
+$$
+x\in\mathbb R^{768},
+$$
+
   > SwiGLU 首先进行两条不同的线性投影：
-  > $$
-  > g=xW_g+b_g,\\
-  > u=xW_u+b_u.
-  > $$
+
+$$
+g=xW_g+b_g,\\ u=xW_u+b_u.
+$$
+
   > 在 ReactVLA 中，两条投影通常进入 FFN intermediate dimension：
-  > $$
-  > g,u\in\mathbb R^{2048}.
-  > $$
+
+$$
+g,u\in\mathbb R^{2048}.
+$$
+
   > 然后对其中一条使用 SiLU，并与另一条逐元素相乘：
-  > $$
-  > h
-  > =
-  > \operatorname{SiLU}(g)\odot u.
-  > $$
+
+$$
+h = \mathrm{SiLU}(g)\odot u.
+$$
+
   > 可以理解为：
-  > $$
-  > \text{输出特征}
-  > =
-  > \text{候选内容}
-  > \times
-  > \text{软门控权重}.
-  > $$
+
+$$
+\text{输出特征} = \text{候选内容} \times \text{软门控权重}.
+$$
+
   > 最后投影回原来的 hidden size：
-  > $$
-  > \operatorname{SwiGLU}(x)
-  > =
-  > \left[
-  > \operatorname{SiLU}(xW_g+b_g)
-  > \odot
-  > (xW_u+b_u)
-  > \right]W_d+b_d.
-  > $$
+
+$$
+\mathrm{SwiGLU}(x) = \left[ \mathrm{SiLU}(xW_g+b_g) \odot (xW_u+b_u) \right]W_d+b_d.
+$$
+
   > 对应维度是：
-  > $$
-  > 768
-  > \xrightarrow[]{W_g,W_u}
-  > 2048
-  > \xrightarrow[]{\text{逐元素门控}}
-  > 2048
-  > \xrightarrow[]{W_d}
-  > 768.
-  > $$
+
+$$
+768 \xrightarrow[]{W_g,W_u} 2048 \xrightarrow[]{\text{逐元素门控}} 2048 \xrightarrow[]{W_d} 768.
+$$
 
 #### 3. AttnRes 与 iMF 的关系
 
@@ -496,44 +434,42 @@ AttnRes 不是 iMF 必需组成部分，而是 ReactVLA 为 low-step action gene
 
 ### 五. Pseudo-Huber Loss（伪 Huber 损失）：稳定 JVP 训练
 
-ReactVLA 不使用普通 MSE（$\left\|V_\theta - v_g\right\|^2$），而是用 Pseudo-Huber Loss 监督修正后的瞬时速度：
+ReactVLA 不使用普通 MSE（ $\left\|V_\theta - v_g\right\|^2$ ），而是用 Pseudo-Huber Loss 监督修正后的瞬时速度：
+
 $$
-e=V_\theta(z_t,r,t)-v_g,\\
-\mathcal L(\theta)
-=
-\frac{1}{D}
-\sum_{d=1}^{D}\delta^2
-\left(
-\sqrt{1+\left(\frac{e_d}{\delta}\right)^2}-1
-\right).
+e=V_\theta(z_t,r,t)-v_g,\\ \mathcal L(\theta) = \frac{1}{D} \sum_{d=1}^{D}\delta^2 \left( \sqrt{1+\left(\frac{e_d}{\delta}\right)^2}-1 \right).
 $$
+
 > 文中默认 $\delta=1$
 
 Pseudo-Huber 与 MSE 的最优解相同，都是让：
+
 $$
 V_\theta(z_t,r,t)\rightarrow v_g.
 $$
+
 两者的区别主要在训练过程。MSE 的梯度与误差成正比：
+
 $$
 \frac{\partial \mathcal L_{\mathrm{MSE}}}{\partial e_d}=e_d,
 $$
-因此误差越大，参数更新也越剧烈。而 Pseudo-Huber 的梯度为：
-$$
-\frac{\partial \mathcal L}{\partial e_d}
-=
-\frac{e_d}
-{\sqrt{1+(e_d/\delta)^2}},
-$$
-当误差很大时，其梯度幅度最多接近 $\delta$，不会无限增大。
 
-**训练初期，$u_\theta$ 和 $v_\theta$ 还不准确，JVP correction 可能产生很大的前向值，使部分样本的 transport error 异常增大。若使用 MSE，这些异常样本会产生很大的梯度，导致 loss 尖峰甚至训练不稳定；Pseudo-Huber 会限制它们对参数更新的影响。**
+因此误差越大，参数更新也越剧烈。而 Pseudo-Huber 的梯度为：
+
+$$
+\frac{\partial \mathcal L}{\partial e_d} = \frac{e_d} {\sqrt{1+(e_d/\delta)^2}},
+$$
+
+当误差很大时，其梯度幅度最多接近 $\delta$ ，不会无限增大。
+
+**训练初期， $u_\theta$ 和 $v_\theta$ 还不准确，JVP correction 可能产生很大的前向值，使部分样本的 transport error 异常增大。若使用 MSE，这些异常样本会产生很大的梯度，导致 loss 尖峰甚至训练不稳定；Pseudo-Huber 会限制它们对参数更新的影响。**
 
 同时，当误差较小时，Pseudo-Huber 近似于 MSE：
+
 $$
-\mathcal L_{\text{Pseudo-Huber}}
-\approx
-\frac{1}{2}e_d^2.
+\mathcal L_{\text{Pseudo-Huber}} \approx \frac{1}{2}e_d^2.
 $$
+
 因此它可以概括为：
 
 > **大误差时限制更新幅度，避免 JVP 异常值破坏训练；小误差时保持类似 MSE 的精细拟合能力。**
@@ -542,67 +478,63 @@ $$
 
 ### 六. 训练流程
 
-输入：真实 action chunk $x$、多模态 context $C$、模型参数 $\theta$
+输入：真实 action chunk $x$ 、多模态 context $C$ 、模型参数 $\theta$
 
 1. 编码多模态条件：
-   $$
-   h_{ctx}=\operatorname{AttnResTransformer}_\theta(C)
-   $$
+
+$$
+h_{ctx}=\mathrm{AttnResTransformer}_\theta(C)
+$$
 
 2. 采样 Gaussian noise：
-   $$
-   e\sim\mathcal N(0,I)
-   $$
 
-3. 从 Logit-Normal distribution 采样 $r,t$，排序后保证 $r\le t$；以 0.5 概率令 $r=t$。
+$$
+e\sim\mathcal N(0,I)
+$$
+
+3. 从 Logit-Normal distribution 采样 $r,t$ ，排序后保证 $r\le t$ ；以 0.5 概率令 $r=t$ 。
 
 4. 构造 noisy action：
-   $$
-   z_t=(1-t)x+te
-   $$
+
+$$
+z_t=(1-t)x+te
+$$
 
 5. 构造已知的 instantaneous velocity target：
-   $$
-   v_g=e-x
-   $$
+
+$$
+v_g=e-x
+$$
 
 6. 令同一个 average-velocity network 在零长度区间预测瞬时速度：
-   $$
-   v_\theta=u_\theta(z_t,t,t\mid h_{ctx})
-   $$
+
+$$
+v_\theta=u_\theta(z_t,t,t\mid h_{ctx})
+$$
 
 7. 计算区间平均速度及其 JVP：
-   $$
-   u_\theta=u_\theta(z_t,r,t\mid h_{ctx})
-   $$
 
-   $$
-   \dot u_\theta
-   =
-   \operatorname{JVP}
-   \left(
-   u_\theta,
-   (z_t,r,t),
-   (v_\theta,0,1)
-   \right)
-   $$
+$$
+u_\theta=u_\theta(z_t,r,t\mid h_{ctx})
+$$
+
+$$
+\dot u_\theta = \mathrm{JVP} \left( u_\theta, (z_t,r,t), (v_\theta,0,1) \right)
+$$
 
 8. 构造 corrected velocity prediction：
-   $$
-   V_\theta
-   =
-   u_\theta+(t-r)\operatorname{sg}(\dot u_\theta)
-   $$
+
+$$
+V_\theta = u_\theta+(t-r)\mathrm{sg}(\dot u_\theta)
+$$
 
 9. 使用 Pseudo-Huber loss：
-   $$
-   \mathcal L
-   =
-   \operatorname{PseudoHuber}_\delta
-   (V_\theta-v_g)
-   $$
 
-10. 更新模型参数 $\theta$。
+$$
+\mathcal L = \mathrm{PseudoHuber}_\delta (V_\theta-v_g)
+$$
+
+10. 更新模型参数 $\theta$ 。
 
 ---
 
@@ -625,15 +557,10 @@ $$
 每一步使用平均速度进行 Euler-style update：
 
 $$
-z_{t_{i+1}}
-=
-z_{t_i}
--
-(t_i-t_{i+1})
- u_\theta(z_{t_i},t_{i+1},t_i\mid C).
+z_{t_{i+1}} = z_{t_i} - (t_i-t_{i+1}) u_\theta(z_{t_i},t_{i+1},t_i\mid C).
 $$
 
-到达 $t=0$ 后，$z_0$ 就是预测的 normalized action trajectory。
+到达 $t=0$ 后， $z_0$ 就是预测的 normalized action trajectory。
 
 #### 2. 论文实际使用的推理步数
 
@@ -648,9 +575,7 @@ $$
 理论上的 one-step 形式为：
 
 $$
-\hat x
-=
-z_1-u_\theta(z_1,0,1\mid C).
+\hat x = z_1-u_\theta(z_1,0,1\mid C).
 $$
 
 但需要注意：
