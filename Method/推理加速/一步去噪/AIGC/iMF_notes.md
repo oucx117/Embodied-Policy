@@ -159,7 +159,7 @@ $$
 
 > JVP 就是 iMF 用来计算 $\frac{d}{dt}u_\theta$ 的自动微分操作：
 > $$
-> JVP(u_θ;v_θ)=\frac{∂u_θ}{∂z_t}v_θ+\frac{∂u_θ}{t}
+> \operatorname{JVP}(u_θ;v_θ)=\frac{∂u_θ}{∂z_t}v_θ+\frac{∂u_θ}{∂t}
 > $$
 > 它表示 average velocity 随当前时间和当前位置变化的趋势。
 
@@ -252,13 +252,15 @@ iMF 的训练流程可以简化为下面几步。
 
 #### 1. 采样数据和时间
 
-输入真实数据 $x$，采样噪声 $e\sim \mathcal{N}(0,I)$，采样时间 $t,r$，加噪得到当前时间的带噪数据 $z_t$：
+输入真实数据 $x$，采样噪声 $e\sim \mathcal{N}(0,I)$，采样时间 $t,r \sim \operatorname{LogitNormal}(\mu=-0.4,\sigma=1.0)$，加噪得到当前时间的带噪数据 $z_t$：
 
 $$
 z_t=(1-t)x+te
 $$
 
-其中 $t$ 表示当前噪声时间，$r$ 表示目标时间。若 $r=0,t=1$，对应从纯噪声一步生成数据。
+其中 $t$ 表示当前噪声时间，$r$ 表示目标时间；若 $r=0,t=1$，对应从纯噪声一步生成数据。
+
+并以 0.5 的概率设置 $r=t$，从而让一半样本退化为普通 Flow Matching。
 
 #### 2. 预测 instantaneous velocity
 

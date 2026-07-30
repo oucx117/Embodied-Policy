@@ -507,6 +507,8 @@ e=V_\theta(z_t,r,t)-v_g,\\
 \sqrt{1+\left(\frac{e_d}{\delta}\right)^2}-1
 \right).
 $$
+> 文中默认 $\delta=1$
+
 Pseudo-Huber 与 MSE 的最优解相同，都是让：
 $$
 V_\theta(z_t,r,t)\rightarrow v_g.
