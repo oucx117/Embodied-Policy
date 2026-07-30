@@ -146,7 +146,9 @@ $$
 
 6. Inference consistency：
    1. 用 Flow Net 从 $z_0$ 推理得到 $\hat{z}_1$
-   2. 要求 $\hat{z}_1$ 接近 $E_a(a_{>t})$ ， $D_a(\hat{z}_1)$ 接近 $a_{>t}$
+   2. 要求：
+      - $\hat{z}_1$ 接近 $E_a(a_{>t})$
+      - $D_a(\hat{z}_1)$ 接近 $a_{>t}$
    3. 计算 $L_{IC}$
 
 7. 总 loss： $L_{total} = λ_1 L_{FM} + λ_2 L_{AE} + λ_3 L_{IC}$
