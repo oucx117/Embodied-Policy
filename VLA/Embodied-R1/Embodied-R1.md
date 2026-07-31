@@ -1,5 +1,9 @@
 ## Embodied-R1: Reinforced Embodied Reasoning for General Robotic Manipulation
 
+> 论文：[arXiv:2508.13998](https://arxiv.org/abs/2508.13998)
+> 项目：[Project Page](https://embodied-r1.github.io/)
+> GitHub：[pickxiguapi/Embodied-R1](https://github.com/pickxiguapi/Embodied-R1)
+
 ### 一. 工作动机和核心思想
 
 **工作动机**：本文旨在解决当前具身智能领域中的一个核心难题：**“从看到做”的鸿沟** 。即便是强大的视觉语言模型（VLM），也难以将丰富的视觉理解能力可靠地转化为机器人在物理世界中的有效动作 ，尤其是在未曾见过的新场景中。作者将这个鸿沟主要归因于两大挑战：

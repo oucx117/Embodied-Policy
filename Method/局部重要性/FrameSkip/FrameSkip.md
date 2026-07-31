@@ -1,5 +1,8 @@
 ## FrameSkip: Learning from Fewer but More Informative Frames in VLA Training
 
+> 论文：[arXiv:2605.13757](https://arxiv.org/abs/2605.13757)
+> GitHub：[ZGC-EmbodyAI/FrameSkip](https://github.com/ZGC-EmbodyAI/FrameSkip)
+
 ### 一. 工作动机
 
 **核心问题**：现有 VLA 模仿学习训练通常默认一条示范里的**每一帧具有同等监督价值**，因此会从密集轨迹中**均匀采样**训练样本。但机器人轨迹天然存在明显的**时间冗余**：大量时间步只是平滑移动、靠近目标、搬运物体或保持抓取状态；而真正决定任务成败的关键阶段，例如 **对齐、接触、抓取、释放**，往往只占很小比例。均匀采样会导致这些**稀疏但重要**的关键帧被大量低信息帧稀释，形成**时间监督不平衡**。

@@ -1,4 +1,10 @@
-## 一. 文章内容概括
+## Motus: A Unified Latent Action World Model
+
+> 论文：[arXiv:2512.13030](https://arxiv.org/abs/2512.13030)
+> 项目：[Project Page](https://motus-robotics.github.io/motus)
+> GitHub：[thu-ml/Motus](https://github.com/thu-ml/Motus)
+
+### 一. 文章内容概括
 
 #### 解决了什么问题？
 
@@ -13,7 +19,7 @@
 
 ------
 
-## 二. 模型结构
+### 二. 模型结构
 
 #### A. 整体架构 (MoT)
 
@@ -44,7 +50,7 @@
 
 ------
 
-## 三. 训练与推理流程
+### 三. 训练与推理流程
 
 #### A. 训练流程
 

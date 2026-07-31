@@ -1,5 +1,9 @@
 ## OpenVLA: An Open-Source Vision-Language-Action Model
 
+> 论文：[arXiv:2406.09246](https://arxiv.org/abs/2406.09246)
+> 项目：[Project Page](https://openvla.github.io/)
+> GitHub：[openvla/openvla](https://github.com/openvla/openvla)
+
 ### 一. 工作动机
 
 **核心问题**：尽管像 RT-2-X 这样的视觉-语言-动作（VLA）模型展现了强大的通用能力，但它们大多是**闭源的**，模型细节、训练代码和权重均不公开，这极大地阻碍了更广泛的学术研究和社区发展 。此外，如何**高效地**将这些巨大的模型**微调**到新任务、新机器人上，尤其是在**消费级硬件**上进行微调，也是一个未被充分探索的关键问题 。

@@ -1,5 +1,9 @@
 ## HAMSTER: HIERARCHICAL ACTION MODELS FOR OPEN-WORLD ROBOT MANIPULATION
 
+> 论文：[arXiv:2502.05485](https://arxiv.org/abs/2502.05485)
+> 项目：[Project Page](https://hamster-robot.github.io/)
+> GitHub：[liyi14/HAMSTER_beta](https://github.com/liyi14/HAMSTER_beta)
+
 ### 一. 工作动机
 
 **核心问题**：当前主流的单体式 VLA 模型（如RT-2, OpenVLA）**严重依赖大规模的示例数据**，而这类数据的获取非常**昂贵耗时**，且**规模、质量和多样性也十分有限**。同时，其推理速度也**限制了在灵巧、动态任务上的应用**。相比之下，传统的小型模仿学习策略虽然在局部控制上表现出色，但缺乏长期规划和高级语义推理能力，**难以泛化到新场景和新任务**。

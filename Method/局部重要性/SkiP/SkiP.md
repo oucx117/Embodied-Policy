@@ -1,5 +1,8 @@
 ## SkiP: When to Skip and When to Refine for Efficient Robot Manipulation
 
+> 论文：[arXiv:2605.15536](https://arxiv.org/abs/2605.15536)
+> 项目：[Project Page](https://pgq18.github.io/SkiP-page/)
+
 ### 一. 工作动机
 
 **核心问题**：现有模仿学习策略通常在**每个控制步**都预测未来动作，不管当前处于平滑移动阶段，还是处于**接触、抓取、对齐**等高精度阶段。这种统一处理方式并不合理：机器人轨迹中大量步骤只是穿过自由空间，动作变化平滑、信息密度较低；而少量关键步骤集中在**接触、抓取、对齐、释放**等阶段，需要更密集、更高分辨率的动作预测。

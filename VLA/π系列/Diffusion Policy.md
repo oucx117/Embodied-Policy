@@ -1,5 +1,9 @@
 # 扩散模型
 
+> 论文：[Denoising Diffusion Probabilistic Models](https://arxiv.org/abs/2006.11239)
+> 项目：[Project Page](https://hojonathanho.github.io/diffusion/)
+> GitHub：[hojonathanho/diffusion](https://github.com/hojonathanho/diffusion)
+
 ### 基本定义
 
 扩散模型是一种生成模型，尤其擅长创造高质量和多样性的图像。其核心思想非常直观，分为两个过程：

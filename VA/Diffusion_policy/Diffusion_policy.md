@@ -1,5 +1,9 @@
 ## Diffusion Policy: Visuomotor Policy Learning via Action Diffusion
 
+> 论文：[arXiv:2303.04137](https://arxiv.org/abs/2303.04137)
+> 项目：[Project Page](https://diffusion-policy.cs.columbia.edu/)
+> GitHub：[real-stanford/diffusion_policy](https://github.com/real-stanford/diffusion_policy)
+
 ### 一. 工作动机
 
 **1. 核心痛点：多模态分布与训练崩溃**

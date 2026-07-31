@@ -1,6 +1,7 @@
 ## ReactVLA: Fast and Lightweight Reactive Robot Manipulation via Improved Mean Flow Action Generation
 
-> 论文：https://arxiv.org/pdf/2606.14255
+> 论文：[arXiv:2606.14255](https://arxiv.org/abs/2606.14255)
+> 项目：[Project Page](https://game-loader.github.io/ReactVLA/)
 
 ### 一. 概述
 

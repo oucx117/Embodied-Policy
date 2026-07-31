@@ -1,3 +1,9 @@
+## LingBot-VA: Causal World Modeling for Robot Control
+
+> 论文：[arXiv:2601.21998](https://arxiv.org/abs/2601.21998)
+> 项目：[Robbyant Technology](https://technology.robbyant.com/lingbot-va)
+> GitHub：[robbyant/lingbot-va](https://github.com/robbyant/lingbot-va)
+
 ### 一. 文章内容概括
 
 #### 解决了什么问题？

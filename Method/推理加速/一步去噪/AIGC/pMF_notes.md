@@ -1,7 +1,7 @@
 ## One-step Latent-free Image Generation with Pixel Mean Flows
 
-> 论文：https://arxiv.org/pdf/2601.22158 
-> 代码：https://github.com/Lyy-iiis/pMF
+> 论文：[arXiv:2601.22158](https://arxiv.org/abs/2601.22158)
+> GitHub：[Lyy-iiis/pMF](https://github.com/Lyy-iiis/pMF)
 
 ### 一. 研究动机
 

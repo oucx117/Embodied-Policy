@@ -1,5 +1,9 @@
 ## MolmoAct：Action Reasoning Models that can Reason in Space
 
+> 论文：[arXiv:2508.07917](https://arxiv.org/abs/2508.07917)
+> 项目：[Ai2 Blog](https://allenai.org/blog/molmoact)
+> GitHub：[allenai/molmoact](https://github.com/allenai/molmoact)
+
 ### 一. 工作动机和核心思想
 
 **工作动机**：先前大多数机器人基础模型将视觉感知和语言指令**直接映射**到机器人控制指令，其内部决策过程不透明，像一个黑盒 。这导致了以下几个核心痛点：

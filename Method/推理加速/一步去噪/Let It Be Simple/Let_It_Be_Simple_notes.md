@@ -1,6 +1,6 @@
 ## Let It Be Simple: One-Step Action Generation for Vision-Language-Action Models
 
-> 论文：https://arxiv.org/pdf/2606.05737
+> 论文：[arXiv:2606.05737](https://arxiv.org/abs/2606.05737)
 
 ### 一. 概述
 

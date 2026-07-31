@@ -1,5 +1,9 @@
 ## RDT-1B: a Diffusion Foundation Model for Bimanual Manipulation
 
+> 论文：[arXiv:2410.07864](https://arxiv.org/abs/2410.07864)
+> 项目：[Project Page](https://rdt-robotics.github.io/rdt-robotics/)
+> GitHub：[thu-ml/RoboticsDiffusionTransformer](https://github.com/thu-ml/RoboticsDiffusionTransformer)
+
 ### 一. 工作动机
 
 **核心问题**：在机器人技术中，双臂操作至关重要，但开发此类基础模型面临极大挑战。协调两个机械臂极其复杂，会导致多模态动作分布问题（即完成同一任务可能有多种截然不同但都合理的动作轨迹），同时在真实物理世界中收集高质量双臂训练数据的成本极高，导致数据稀缺。

@@ -1,5 +1,9 @@
 ## ImageWAM: Do World Action Models Really Need Video Generation, or Just Image Editing?
 
+> 论文：[arXiv:2606.19531](https://arxiv.org/abs/2606.19531)
+> 项目：[Project Page](https://zhangwenyao1.github.io/ImageWAM/)
+> GitHub：[yuyangalin/ImageWAM](https://github.com/yuyangalin/ImageWAM)
+
 ### 一. 工作动机
 
 **核心问题**：World Action Model（WAM）通常依赖 video generation 来连接“世界建模”和“动作预测”。这类方法的直觉是：模型先想象未来视频，再根据想象出的未来状态预测机器人动作。但**完整生成未来视频代价很高**，而且**生成出来的视频不一定都是对动作有用的信息**。

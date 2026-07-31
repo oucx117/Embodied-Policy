@@ -1,6 +1,10 @@
-## RT-1: Robotics Transformer for Real-World Control at Scale 
+## RT-1: Robotics Transformer for Real-World Control at Scale
 
-### 一. 工作动机 
+> 论文：[arXiv:2212.06817](https://arxiv.org/abs/2212.06817)
+> 项目：[Project Page](https://robotics-transformer1.github.io/)
+> GitHub：[google-research/robotics_transformer](https://github.com/google-research/robotics_transformer)
+
+### 一. 工作动机
 
 **核心问题**：传统的机器人学习通常依赖于为特定任务收集的、小规模的、孤立的数据集 。受计算机视觉（CV）和自然语言处理（NLP）领域的启发，研究者们希望探索能否通过在一个**大规模、多样化、与具体任务无关**的数据集上训练一个**单一、高容量的通用模型**，来显著提升机器人在真实世界中的泛化能力 。
 

@@ -1,7 +1,8 @@
 ## Xiaomi-Robotics-0: An Open-Sourced Vision-Language-Action Model with Real-Time Execution
 
-> 论文：[arXiv:2602.12684](https://arxiv.org/abs/2602.12684) 
-> 项目主页：[xiaomi-robotics-0.github.io](https://xiaomi-robotics-0.github.io/)
+> 论文：[arXiv:2602.12684](https://arxiv.org/abs/2602.12684)
+> 项目：[Project Page](https://xiaomi-robotics-0.github.io/)
+> GitHub：[XiaomiRobotics/Xiaomi-Robotics-0](https://github.com/XiaomiRobotics/Xiaomi-Robotics-0)
 
 ### 一. 工作动机
 

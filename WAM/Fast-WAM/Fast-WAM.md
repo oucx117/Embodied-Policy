@@ -1,4 +1,10 @@
-## 一. 文章内容概括
+## Fast-WAM: Do World Action Models Need Test-Time Future Imagination?
+
+> 论文：[arXiv:2603.16666](https://arxiv.org/abs/2603.16666)
+> 项目：[Project Page](https://yuantianyuan01.github.io/FastWAM/)
+> GitHub：[yuantianyuan01/FastWAM](https://github.com/yuantianyuan01/FastWAM)
+
+### 一. 文章内容概括
 
 #### 解决了什么问题？
 

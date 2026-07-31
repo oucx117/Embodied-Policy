@@ -1,5 +1,9 @@
 ## 流匹配 (Flow Matching) 的工作原理
 
+> 论文：[Flow Matching for Generative Modeling](https://arxiv.org/abs/2210.02747)
+> 项目：[Flow Matching Guide](https://facebookresearch.github.io/flow_matching/)
+> GitHub：[facebookresearch/flow_matching](https://github.com/facebookresearch/flow_matching)
+
 ### 一. 路径定义
 
 传统扩散模型的前向过程是通过马尔科夫链，一步步地加入高斯噪声。相比之下，流匹配则简单得多，它直接定义了一条从纯噪声 $\epsilon$ 到真实图像 $A_t$ 的直线路径，对于时间步 $\tau$ （这里 $\tau$ 是从 0 到 1 的连续值）：

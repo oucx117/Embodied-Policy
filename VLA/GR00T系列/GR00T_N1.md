@@ -1,5 +1,9 @@
 ## GR00T N1: An Open Foundation Model for Generalist Humanoid Robots
 
+> 论文：[arXiv:2503.14734](https://arxiv.org/abs/2503.14734)
+> 项目：[NVIDIA Research](https://research.nvidia.com/labs/lpr/publication/gr00tn1_2025/)
+> GitHub：[NVIDIA/Isaac-GR00T](https://github.com/NVIDIA/Isaac-GR00T)
+
 ### 一. 工作动机
 
 **核心问题**：通用机器人不仅需要能够适应人类环境的硬件形态，还需要能够理解开放式任务、处理真实世界变化并快速学习新技能的基础模型。已有 VLA / imitation learning 方法通常受限于某一类机器人本体、某一类数据来源或某一类任务，难以直接扩展到**通用 humanoid robot**。更关键的是，真实 humanoid 数据采集成本极高，不存在类似互联网文本/图像那样的大规模 humanoid robot 数据，因此单靠某一种机器人或某一种真实数据很难训练出真正的泛化模型。

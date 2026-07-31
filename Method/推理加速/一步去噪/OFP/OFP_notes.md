@@ -1,6 +1,6 @@
 ## One-Step Flow Policy: Self-Distillation for Fast Visuomotor Policies
 
-> 论文：https://arxiv.org/pdf/2603.12480
+> 论文：[arXiv:2603.12480](https://arxiv.org/abs/2603.12480)
 
 ### 一. 概述
 

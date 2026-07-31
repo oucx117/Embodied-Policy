@@ -1,5 +1,8 @@
 ## See What Matters: Differentiable Grid Sample Pruning for Generalizable Vision-Language-Action Model
 
+> 论文：[arXiv:2605.11817](https://arxiv.org/abs/2605.11817)
+> GitHub：[Fediory/Grid-Sampler](https://github.com/Fediory/Grid-Sampler)
+
 ### 一. 工作动机
 
 **核心问题**：现有 VLA 模型通常会把图像编码成密集视觉 token，例如 ViT 常见的 $16\times16=256$ 个视觉 token。下游 Transformer 需要同时处理视觉、语言和动作 token，计算量会随着序列长度增长而显著增加，因此**密集视觉 token 成为 VLA 训练和推理效率的重要瓶颈**。

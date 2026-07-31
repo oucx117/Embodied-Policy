@@ -1,5 +1,9 @@
 ## VLA-JEPA: Enhancing Vision-Language-Action Model with Latent World Model
 
+> 论文：[arXiv:2602.10098](https://arxiv.org/abs/2602.10098)
+> 项目：[Project Page](https://ginwind.github.io/VLA-JEPA/)
+> GitHub：[ginwind/VLA-JEPA](https://github.com/ginwind/VLA-JEPA)
+
 ### 一. 工作动机
 
 **核心问题**：VLA / WAM 的训练不能只依赖带 action label 的机器人轨迹。真实机器人数据昂贵且难采集，而互联网上往往存在大量 **action-free videos**，也就是只有视频、没有动作标签的数据。问题是：**这些纯视频数据到底如何转化为对 policy 预训练有用的信号？**

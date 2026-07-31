@@ -1,5 +1,9 @@
 ## ACT: Action Chunking with Transformers
 
+> 论文：[arXiv:2304.13705](https://arxiv.org/abs/2304.13705)
+> 项目：[ALOHA Project Page](https://tonyzhaozh.github.io/aloha/)
+> GitHub：[tonyzhaozh/act](https://github.com/tonyzhaozh/act)
+
 ### 一. 工作动机
 
 - **核心痛点**：精细的机器人操纵任务（如穿线、安装电池、拉拉链）需要极高的精度、复杂的接触力协调以及闭环视觉反馈。传统方案通常依赖昂贵的高端硬件和繁琐的标定。在传统的模仿学习（如行为克隆 BC）中，**模型通常一次只预测下一步动作**。微小的执行误差会在长序列任务中不断累加，最终导致机器人偏离训练分布，任务崩溃。

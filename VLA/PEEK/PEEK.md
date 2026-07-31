@@ -1,5 +1,9 @@
 ## PEEK: Guiding and Minimal Image Representations for Zero-Shot Generalization of Robot Manipulation Policies
 
+> 论文：[arXiv:2509.18282](https://arxiv.org/abs/2509.18282)
+> 项目：[Project Page](https://peek-robot.github.io/)
+> GitHub：[peek-robot/peek](https://github.com/peek-robot/peek)
+
 ### 一. 工作动机和核心思想
 
 **工作动机：** 通过模仿学习训练的机器人操作策略泛化能力很差，当面对新物体、混乱的环境或语义上的变化时，它们的性能会急剧下降。论文作者认为，这是因为传统策略被要求同时学习三个高度纠缠的复杂任务 ：

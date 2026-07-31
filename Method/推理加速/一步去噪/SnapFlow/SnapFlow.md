@@ -1,5 +1,7 @@
 ## SnapFlow: One-Step Action Generation for Flow-Matching VLAs via Progressive Self-Distillation
 
+> 论文：[arXiv:2604.05656](https://arxiv.org/abs/2604.05656)
+
 ### 一. 工作动机
 
 **核心问题**：π0、π0.5、SmolVLA 这类 flow-matching VLA 通常不是一次性输出动作，而是从随机噪声开始，经过多步 denoising / ODE integration，逐步生成一个 action chunk。常见设置是 **10 个 denoising steps**，也就是 action expert 要连续 forward 多次。这会带来明显的推理延迟。论文中以 π0.5 为例，10-step action denoising 占据端到端推理时间的大部分：总推理约 274 ms，其中 denoising 约 241 ms。也就是说，真正拖慢部署的不是只看图像和语言的 VLM prefix，而是后面的多步 action generation。

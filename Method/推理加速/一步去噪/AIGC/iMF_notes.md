@@ -1,7 +1,7 @@
 ## Improved Mean Flows: On the Challenges of Fastforward Generative Models
 
-> 论文：https://arxiv.org/pdf/2512.02012 
-> 代码：https://github.com/Lyy-iiis/imeanflow
+> 论文：[arXiv:2512.02012](https://arxiv.org/abs/2512.02012)
+> GitHub：[Lyy-iiis/imeanflow](https://github.com/Lyy-iiis/imeanflow)
 
 ### 一. 概述
 

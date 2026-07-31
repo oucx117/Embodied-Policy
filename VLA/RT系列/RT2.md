@@ -1,5 +1,8 @@
 ## RT-2: Vision-Language-Action Models Transfer Web Knowledge to Robotic Control
 
+> 论文：[arXiv:2307.15818](https://arxiv.org/abs/2307.15818)
+> 项目：[Project Page](https://robotics-transformer2.github.io/)
+
 ### 一. 工作动机
 
 **核心问题**：如何将视觉语言模型（VLM）在互联网规模数据上学到的丰富语义知识和推理能力，直接有效地迁移到机器人的底层控制中？以往的方法通常将VLM用作高层规划器，与底层控制分离，导致VLM的知识无法惠及机器人的具体动作执行 。

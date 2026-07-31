@@ -1,5 +1,9 @@
 ## Qwen-RobotManip Technical Report: Alignment Unlocks Scale for Robotic Manipulation Foundation Models
 
+> 论文：[arXiv:2606.17846](https://arxiv.org/abs/2606.17846)
+> 项目：[Qwen Blog](https://qwen.ai/blog?id=qwen-robotmanip)
+> GitHub：[QwenLM/Qwen-RobotManip](https://github.com/QwenLM/Qwen-RobotManip)
+
 ### 一. 工作动机
 
 **核心问题**：机器人操作模型想要像大语言模型一样通过大规模数据获得泛化能力（scale），但**机器人数据天然高度异构**。不同数据集里的机器人平台、关节数量、动作空间、相机位置、坐标系、控制频率、任务类型都不一样。如果直接把这些数据混在一起训练，模型不一定会从更多数据中受益，反而可能**因为表示冲突而学到互相矛盾的控制规律**。

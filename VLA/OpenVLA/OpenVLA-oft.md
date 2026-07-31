@@ -1,5 +1,9 @@
 ## OpenVLA-OFT
 
+> 论文：[arXiv:2502.19645](https://arxiv.org/abs/2502.19645)
+> 项目：[Project Page](https://openvla-oft.github.io/)
+> GitHub：[moojink/openvla-oft](https://github.com/moojink/openvla-oft)
+
 ### 一. 工作动机
 
 - **核心痛点**：近期如 OpenVLA 等视觉-语言-动作（VLA）基础模型展现了强大的通用性，但从业者在将其微调部署到新机器人平台（尤其是高频、双臂系统）时面临巨大挑战。原版模型默认的**自回归微调机制**推理速度极慢（仅 3-5 Hz），且处理连续高精度的物理动作时极易产生复合误差（由于**离散化**），完全无法满足真实世界中复杂双臂操纵任务（需 25-50+ Hz）的实时控制需求。

@@ -1,8 +1,8 @@
 ## Action-to-Action Flow Matching
 
-> 论文：https://arxiv.org/pdf/2602.07322 
-> 代码：https://github.com/JIAjindou/A2A_Flow_Matching 
-> 项目：https://jingliangli.com/A2A_Flow_Matching/
+> 论文：[arXiv:2602.07322](https://arxiv.org/abs/2602.07322)
+> 项目：[Project Page](https://jingliangli.com/A2A_Flow_Matching/)
+> GitHub：[JIAjindou/A2A_Flow_Matching](https://github.com/JIAjindou/A2A_Flow_Matching)
 
 ### 一. 概述
 

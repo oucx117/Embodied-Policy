@@ -1,4 +1,10 @@
-## 一. 文章内容概括
+## Cosmos Policy: Fine-Tuning Video Models for Visuomotor Control and Planning
+
+> 论文：[arXiv:2601.16163](https://arxiv.org/abs/2601.16163)
+> 项目：[NVIDIA Research](https://research.nvidia.com/labs/dir/cosmos-policy/)
+> GitHub：[NVlabs/cosmos-policy](https://github.com/NVlabs/cosmos-policy)
+
+### 一. 文章内容概括
 
 #### 解决了什么问题？
 
@@ -14,7 +20,7 @@
 
 ---
 
-## 二. 模型结构
+### 二. 模型结构
 
 Cosmos Policy 的核心思想是作为一个统一的模型，在不改变底层视频生成网络结构的前提下，联合预测动作、未来状态和价值 。
 
@@ -54,7 +60,7 @@ Cosmos Policy 的核心思想是作为一个统一的模型，在不改变底层
 
 ---
 
-## 三. 训练与推理流程
+### 三. 训练与推理流程
 
 #### A. 训练流程
 

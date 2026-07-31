@@ -1,5 +1,9 @@
 ## Qwen-VLA: Unifying Vision-Language-Action Modeling across Tasks, Environments, and Robot Embodiments
 
+> 论文：[arXiv:2605.30280](https://arxiv.org/abs/2605.30280)
+> 项目：[Qwen Blog](https://qwen.ai/blog?id=qwenvla)
+> GitHub：[QwenLM/Qwen-VLA](https://github.com/QwenLM/Qwen-VLA)
+
 ### 一. 工作动机
 
 **核心问题**：现有具身智能模型通常按照任务类型、环境类型或机器人本体分别设计，例如机械臂操作模型主要面向 tabletop manipulation，导航模型主要面向 waypoint prediction，人类第一视角数据又常以手部轨迹或身体轨迹形式存在。这些任务表面上差异很大，输出空间、控制频率、动作维度、预测 horizon、评估协议都不同，**因此模型容易形成“专用系统”，难以跨任务、跨环境和跨机器人本体迁移**。

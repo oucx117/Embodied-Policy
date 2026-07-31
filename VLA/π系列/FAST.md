@@ -1,5 +1,9 @@
 ## FAST: EFFICIENT ACTION TOKENIZATION FOR VISION-LANGUAGE-ACTION MODELS
 
+> 论文：[arXiv:2501.09747](https://arxiv.org/abs/2501.09747)
+> 项目：[Physical Intelligence](https://www.pi.website/research/fast)
+> GitHub：[Physical-Intelligence/openpi](https://github.com/Physical-Intelligence/openpi)
+
 ### 一. 工作动机
 
 **核心问题**：当前主流的单体式 VLA 模型（如 RT-2, OpenVLA）所采用的“朴素”动作 tokenization 方法（即逐时间步、逐维度地分箱 bins），在处理高频、灵巧的机器人操作任务时表现不佳。首先，高频数据意味着一个动作片段（action chunk）会包含大量时间步，而**朴素方法会为每个时间步都生成多个 token，导致序列过长，推理时间过长**；其次，在高频控制下，相邻动作高度相似，经过粗糙的离散化分箱后，它们很大概率会落入同一个区间，从而被映射为完全相同的 token，导致**生成的 token 序列信息含大量冗余，学习信号微弱**，模型很容易陷入“简单复制上一个动作”的局部最优解中，而无法学会真正的复杂技能。
