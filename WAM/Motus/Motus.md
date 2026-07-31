@@ -94,25 +94,21 @@
 - **训练状态**：使用目标机器人的**真实动作 (Actions)** 对包含全部 3 个专家在内的完整 Motus 模型进行最终的对齐与微调 。 
 
 **算法流程**
-```text
 
-Algorithm 1  Training  
-
-1: repeat  
-2: o_t:t+k^0, a_t+1:t+k^0, ℓ ~ D_expert  
-3: τ_o, τ_a ~ Uniform({1, 2, …, T_τ})  
-4: ε_o, ε_a ~ N(0, I)  
-5: o_t+1:t+k^τ_o = (1 - τ_o)o_t+1:t+k^0 + τ_oε_o  
-6: a_t+1:t+k^τ_a = (1 - τ_a)a_t+1:t+k^0 + τ_aε_a  
-7: v_o^θ, v_a^θ = Model_θ(o_t^0, o_t+1:t+k^τ_o, a_t+1:t+k^τ_a, τ_o, τ_a, ℓ)  
-8: l_action^θ = |v_a^θ - (ε_a - a_t+1:t+k^0)|_2^2  
-9: l_obs^θ = |v_o^θ - (ε_o - o_t+1:t+k^0)|_2^2  
-10: l^θ = l_action^θ + l_obs^θ  
-11: θ ← θ - η ∇_θ l^θ  
-12: until converged
-
-
-```
+| **Algorithm 1** | **Training** |
+| :---: | :--- |
+| **1:** | **repeat** |
+| **2:** | $o _{t:t+k}^{0}, a _{t+1:t+k}^{0}, \ell \sim \mathcal{D} _{\mathrm{expert}}$ |
+| **3:** | $\tau _o, \tau _a \sim \mathrm{Uniform}(\lbrace 1,2,\ldots,T _\tau\rbrace)$ |
+| **4:** | $\varepsilon _o, \varepsilon _a \sim \mathcal{N}(0,I)$ |
+| **5:** | $o _{t+1:t+k}^{\tau _o}=(1-\tau _o)o _{t+1:t+k}^{0}+\tau _o\varepsilon _o$ |
+| **6:** | $a _{t+1:t+k}^{\tau _a}=(1-\tau _a)a _{t+1:t+k}^{0}+\tau _a\varepsilon _a$ |
+| **7:** | $v _o^\theta,v _a^\theta=\mathrm{Model} _\theta(o _t^0,o _{t+1:t+k}^{\tau _o},a _{t+1:t+k}^{\tau _a},\tau _o,\tau _a,\ell)$ |
+| **8:** | $l _{\mathrm{action}}^\theta=\left\|v _a^\theta-(\varepsilon _a-a _{t+1:t+k}^{0})\right\| _2^2$ |
+| **9:** | $l _{\mathrm{obs}}^\theta=\left\|v _o^\theta-(\varepsilon _o-o _{t+1:t+k}^{0})\right\| _2^2$ |
+| **10:** | $l ^\theta=l _{\mathrm{action}}^\theta+l _{\mathrm{obs}}^\theta$ |
+| **11:** | $\theta\leftarrow\theta-\eta\nabla _\theta l ^\theta$ |
+| **12:** | **until** converged |
 
 #### B. 灵活的多模式推理流程
 
@@ -121,103 +117,78 @@ Motus 构建了类似 UniDiffuser 的调度器，推理时通过改变视频和�
 1. **视频生成模式 (VGM)**： $p(o_{t+1:t+k}\mid o_t,\ell)$
 
    给定当前观测和指令，动作维度保持**纯噪声**状态，逐步对视频维度进行去噪，预测**未来的视觉画面**。
-   ```text
 
-   Algorithm 2  VGM  
-   
-   Require: o_t^0, ℓ, θ  
-   
-   1: ε_o, ε_a ~ N(0, I)  
-   2: o_t+1:t+k^T_τ ← ε_o  
-   3: a_t+1:t+k^T_τ ← ε_a  
-   4: for τ = T_τ … 1  do  
-   5: v_o, v_a = Model_θ(o_t^0, o_t+1:t+k^τ, a_t+1:t+k^T_τ, τ, T_τ, ℓ)  
-   6: o_t+1:t+k^τ-1 = o_t+1:t+k^τ + v_o dτ  
-   7: end for 
-   8: return o_t+1:t+k^0
-
-   
-   ```
+| **Algorithm 2** | **VGM** |
+| :---: | :--- |
+| **Require:** | $o _t^0,\ell,\theta$ |
+| **1:** | $\varepsilon _o,\varepsilon _a\sim\mathcal{N}(0,I)$ |
+| **2:** | $o _{t+1:t+k}^{T _\tau}\leftarrow\varepsilon _o$ |
+| **3:** | $a _{t+1:t+k}^{T _\tau}\leftarrow\varepsilon _a$ |
+| **4:** | **for** $\tau=T _\tau,\ldots,1$ **do** |
+| **5:** | $v _o,v _a=\mathrm{Model} _\theta(o _t^0,o _{t+1:t+k}^{\tau},a _{t+1:t+k}^{T _\tau},\tau,T _\tau,\ell)$ |
+| **6:** | $o _{t+1:t+k}^{\tau-1}=o _{t+1:t+k}^{\tau}+v _o\,\mathrm{d}\tau$ |
+| **7:** | **end for** |
+| **8:** | **return** $o _{t+1:t+k}^{0}$ |
 
 2. **世界模型模式 (World Model)**： $p(o_{t+1:t+k}\mid o_t,a_{t+1:t+k})$
 
    给定当前观测和一段**干净**的动作指令序列，通过去噪推演预测出**执行该动作后的未来视觉观测结果**。
-   ```text
 
-   Algorithm 3  World Model  
-   
-   Require: o_t^0, a_t+1:t+k^0, ℓ, θ  
-   
-   1: ε_o ~ N(0, I)  
-   2: o_t+1:t+k^T_τ ← ε_o  
-   3: for τ = T_τ … 1  do  
-   4: v_o, v_a = Model_θ(o_t^0, o_t+1:t+k^τ, a_t+1:t+k^0, τ, 0, ℓ)  
-   5: o_t+1:t+k^τ-1 = o_t+1:t+k^τ + v_o dτ  
-   6: end for 
-   7: return o_t+1:t+k^0
-
-   
-   ```
+| **Algorithm 3** | **World Model** |
+| :---: | :--- |
+| **Require:** | $o _t^0,a _{t+1:t+k}^{0},\ell,\theta$ |
+| **1:** | $\varepsilon _o\sim\mathcal{N}(0,I)$ |
+| **2:** | $o _{t+1:t+k}^{T _\tau}\leftarrow\varepsilon _o$ |
+| **3:** | **for** $\tau=T _\tau,\ldots,1$ **do** |
+| **4:** | $v _o,v _a=\mathrm{Model} _\theta(o _t^0,o _{t+1:t+k}^{\tau},a _{t+1:t+k}^{0},\tau,0,\ell)$ |
+| **5:** | $o _{t+1:t+k}^{\tau-1}=o _{t+1:t+k}^{\tau}+v _o\,\mathrm{d}\tau$ |
+| **6:** | **end for** |
+| **7:** | **return** $o _{t+1:t+k}^{0}$ |
 
 3. **逆动力学模型模式 (IDM)**： $p(a_{t+1:t+k}\mid o_{t:t+k})$
 
    给定一段**干净**的视频观测序列，将动作维度初始化为纯噪声并逐步去噪，推断出**产生该视觉变化所需的物理动作**。
-   ```text
 
-   Algorithm 4  IDM  
-   
-   Require: o_t:t+k^0, ℓ, θ  
-   
-   1: ε_a ~ N(0, I)  
-   2: a_t+1:t+k^T_τ ← ε_a  
-   3: for τ = T_τ … 1  do  
-   4: v_o, v_a = Model_θ(o_t:t+k^0, a_t+1:t+k^τ, 0, τ, ℓ)  
-   5: a_t+1:t+k^τ-1 = a_t+1:t+k^τ + v_a dτ  
-   6: end for 
-   7: return a_t+1:t+k^0
-
-   
-   ```
+| **Algorithm 4** | **IDM** |
+| :---: | :--- |
+| **Require:** | $o _{t:t+k}^{0},\ell,\theta$ |
+| **1:** | $\varepsilon _a\sim\mathcal{N}(0,I)$ |
+| **2:** | $a _{t+1:t+k}^{T _\tau}\leftarrow\varepsilon _a$ |
+| **3:** | **for** $\tau=T _\tau,\ldots,1$ **do** |
+| **4:** | $v _o,v _a=\mathrm{Model} _\theta(o _{t:t+k}^{0},a _{t+1:t+k}^{\tau},0,\tau,\ell)$ |
+| **5:** | $a _{t+1:t+k}^{\tau-1}=a _{t+1:t+k}^{\tau}+v _a\,\mathrm{d}\tau$ |
+| **6:** | **end for** |
+| **7:** | **return** $a _{t+1:t+k}^{0}$ |
 
 4. **VLA 控制模式**： $p(a_{t+1:t+k}\mid o_t,\ell)$
 
    给定单帧观测和语言指令，视频维度保持**纯噪声**状态，模型专注于对动作维度去噪，直接输出**控制策略**。  
-   ```text
 
-   Algorithm 5  VLA  
-   
-   Require: o_t^0, ℓ, θ  
-   
-   1: ε_o, ε_a ~ N(0, I)  
-   2: o_t+1:t+k^T_τ ← ε_o  
-   3: a_t+1:t+k^T_τ ← ε_a  
-   4: for τ = T_τ … 1  do  
-   5: v_o, v_a = Model_θ(o_t^0, o_t+1:t+k^T_τ, a_t+1:t+k^τ, T_τ, τ, ℓ)  
-   6: a_t+1:t+k^τ-1 = a_t+1:t+k^τ + v_a dτ  
-   7: end for 
-   8: return a_t+1:t+k^0
-
-   
-   ```
+| **Algorithm 5** | **VLA** |
+| :---: | :--- |
+| **Require:** | $o _t^0,\ell,\theta$ |
+| **1:** | $\varepsilon _o,\varepsilon _a\sim\mathcal{N}(0,I)$ |
+| **2:** | $o _{t+1:t+k}^{T _\tau}\leftarrow\varepsilon _o$ |
+| **3:** | $a _{t+1:t+k}^{T _\tau}\leftarrow\varepsilon _a$ |
+| **4:** | **for** $\tau=T _\tau,\ldots,1$ **do** |
+| **5:** | $v _o,v _a=\mathrm{Model} _\theta(o _t^0,o _{t+1:t+k}^{T _\tau},a _{t+1:t+k}^{\tau},T _\tau,\tau,\ell)$ |
+| **6:** | $a _{t+1:t+k}^{\tau-1}=a _{t+1:t+k}^{\tau}+v _a\,\mathrm{d}\tau$ |
+| **7:** | **end for** |
+| **8:** | **return** $a _{t+1:t+k}^{0}$ |
 
 5. **视频-动作联合预测模式**： $p(o_{t+1:t+k},a_{t+1:t+k}\mid o_t,\ell)$
 
    给定观测和指令，从高斯噪声中同时**联合去噪**，输出**未来的视频帧序列和精确的动作轨迹块** 。  
-   ```text
 
-   Algorithm 6  Video-Action Joint Prediction Model  
-   
-   Require: o_t^0, ℓ, θ  
-   
-   1: ε_o, ε_a ~ N(0, I)  
-   2: o_t+1:t+k^T_τ ← ε_o  
-   3: a_t+1:t+k^T_τ ← ε_a  
-   4: for τ = T_τ … 1  do  
-   5: v_o, v_a = Model_θ(o_t^0, o_t+1:t+k^τ, a_t+1:t+k^τ, τ, τ, ℓ)  
-   6: o_t+1:t+k^τ-1 = o_t+1:t+k^τ + v_o dτ  
-   7: a_t+1:t+k^τ-1 = a_t+1:t+k^τ + v_a dτ  
-   8: end for 
-   9: return o_t+1:t+k^0, a_t+1:t+k^0
-
-   
-   ```
+| **Algorithm 6** | **Video-Action Joint Prediction Model** |
+| :---: | :--- |
+| **Require:** | $o _t^0,\ell,\theta$ |
+| **1:** | $\varepsilon _o,\varepsilon _a\sim\mathcal{N}(0,I)$ |
+| **2:** | $o _{t+1:t+k}^{T _\tau}\leftarrow\varepsilon _o$ |
+| **3:** | $a _{t+1:t+k}^{T _\tau}\leftarrow\varepsilon _a$ |
+| **4:** | **for** $\tau=T _\tau,\ldots,1$ **do** |
+| **5:** | $v _o,v _a=\mathrm{Model} _\theta(o _t^0,o _{t+1:t+k}^{\tau},a _{t+1:t+k}^{\tau},\tau,\tau,\ell)$ |
+| **6:** | $o _{t+1:t+k}^{\tau-1}=o _{t+1:t+k}^{\tau}+v _o\,\mathrm{d}\tau$ |
+| **7:** | $a _{t+1:t+k}^{\tau-1}=a _{t+1:t+k}^{\tau}+v _a\,\mathrm{d}\tau$ |
+| **8:** | **end for** |
+| **9:** | **return** $o _{t+1:t+k}^{0},a _{t+1:t+k}^{0}$ |
