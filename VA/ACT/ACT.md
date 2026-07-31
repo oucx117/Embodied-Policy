@@ -52,7 +52,7 @@ ACT 的核心是将机器人策略建模为一个**条件变分自编码器（CV
 
 总体损失函数由两部分组成：
 
-$\mathcal{L}=\mathcal{L}_{\mathrm{reconst}}+\beta\mathcal{L}_{\mathrm{reg}}$
+$\mathcal{L}=\mathcal{L} _{\mathrm{reconst}}+\beta\mathcal{L} _{\mathrm{reg}}$
 
 - **$\mathcal{L}_{\mathrm{reconst}}$ (L1 重建损失)**：促使解码器生成的动作序列尽可能贴近人类的真实演示动作。采用 L1 Loss 因为它对精细位置序列的建模比 L2 更精确。
 - **$\mathcal{L}_{\mathrm{reg}}$ (KL 散度正则化)**：约束编码器预测的高斯分布 $\mathcal{N}(\mu,\sigma^2)$ 逼近标准高斯分布 $\mathcal{N}(0,1)$ 。

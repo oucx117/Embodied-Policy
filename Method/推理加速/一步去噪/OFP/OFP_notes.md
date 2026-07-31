@@ -89,7 +89,7 @@ OFP 因此使用 **Self-Consistency Training**。它的核心是：**在同一�
 
 2. 然后，OFP 让 **EMA teacher** 从 $z_m$ 出发，预测从 $m$ 到 $r$ 的平均速度，并得到一个预测终点：
 
-   $\displaystyle \hat{z}_r=z_m+(r-m)u_{\theta^-}(z_m,m,r|o)$
+   $$\hat{z} _r=z _m+(r-m)u _{\theta^-}(z _m,m,r|o)$$
 
    这里的 **EMA teacher** 不是外部 teacher，而是当前 student 模型参数的滑动平均版本。它变化更慢，因此输出相对稳定。
 
@@ -260,7 +260,7 @@ $$
 >
 >    3. EMA teacher 从 $z_m$ 出发，预测从 $m$ 到 $r$ 的平均速度，并得到预测终点：
 >
->       $\displaystyle \hat{z}_r = z_m+(r-m)u_{\theta^-}(z_m,m,r|o)$
+>       $$\hat{z} _r = z _m+(r-m)u _{\theta^-}(z _m,m,r|o)$$
 >
 >    4. 用 teacher 预测的终点构造从 $t$ 到 $r$ 的平均速度目标：
 >
@@ -300,7 +300,7 @@ $$
 >
 >    4. 用二者差异构造 guidance direction：
 >
->       $\displaystyle g = u_{\theta^-}(\tilde{z}_{t'},t',t'|o) - u_{\theta^-}(\tilde{z}_{t'},t',t'|\phi)$
+>       $$g = u _{\theta^-}(\tilde{z} _{t'},t',t'|o) - u _{\theta^-}(\tilde{z} _{t'},t',t'|\phi)$$
 >
 >       这里的 $g$ 可以理解为“当前任务条件相对于普通动作分布，多出来的修正方向”。
 >

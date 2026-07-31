@@ -114,7 +114,7 @@ GR00T N1 的动作模块是一个基于 DiT 的 flow-matching policy。它通过
 
 5. **计算 Flow Matching 损失**：模型目标是拟合从带噪动作到真实动作的 denoising vector field，论文中的损失为：
 
-   $\displaystyle \mathcal{L}_{\mathrm{FM}}(\theta)=\mathbb{E}_\tau\left[\left\|V_\theta(\phi_t,A_t^\tau,q_t)-(\epsilon-A_t)\right\|_2^2\right]$
+   $$\mathcal{L} _{\mathrm{FM}}(\theta)=\mathbb{E} _\tau\left[\left\|V _\theta(\phi _t,A _t^\tau,q _t)-(\epsilon-A _t)\right\| _2^2\right]$$
 
 6. **联合优化**：VLM 与 DiT 紧密耦合训练。训练细节中，DiT、视觉编码器和 embodiment-specific adapter 模块会参与训练；语言相关部分保持冻结或基本不更新（LLM主干），以保留预训练 VLM 的语言能力。
 

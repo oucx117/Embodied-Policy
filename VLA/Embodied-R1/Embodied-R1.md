@@ -186,7 +186,7 @@ Embodied-R1 输出“指向”信号之后，需要进一步转化为机器人�
 
       * 利用之前缓存的旧策略概率以及优势值，根据下式计算损失函数
 
-        $\displaystyle \mathcal{L}(\theta) = \frac{1}{G} \sum_{i=1}^{G} \sum_{t=1}^{|y_i|} \min\left[ \frac{\pi_{\theta}(y_{i,t} \mid x, y_{i,<t})}{\pi_{\theta_{\text{old}}}(y_{i,t} \mid x, y_{i,<t})} \hat{A}_{i,t}, \mathrm{clip}\left( \frac{\pi_{\theta}(y_{i,t} \mid x, y_{i,<t})}{\pi_{\theta_{\text{old}}}(y_{i,t} \mid x, y_{i,<t})}, 1-\epsilon, 1+\epsilon \right) \hat{A}_{i,t} \right]$
+        $$\mathcal{L}(\theta) = \frac{1}{G} \sum _{i=1}^{G} \sum _{t=1}^{|y _i|} \min\left[ \frac{\pi _{\theta}(y _{i,t} \mid x, y _{i,<t})}{\pi _{\theta _{\text{old}}}(y _{i,t} \mid x, y _{i,<t})} \hat{A} _{i,t}, \mathrm{clip}\left( \frac{\pi _{\theta}(y _{i,t} \mid x, y _{i,<t})}{\pi _{\theta _{\text{old}}}(y _{i,t} \mid x, y _{i,<t})}, 1-\epsilon, 1+\epsilon \right) \hat{A} _{i,t} \right]$$
 
     * **第5步：更新策略**：反向传播，更新新策略 $\pi_{\theta}$ 参数
 

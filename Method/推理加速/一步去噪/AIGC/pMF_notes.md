@@ -164,8 +164,8 @@ pMF 的网络不直接预测 velocity，而是直接输出：
 
 $$
 \begin{aligned}
-x_\theta(z_t,r,t)&=\operatorname{net}_\theta(z_t,r,t),\\
-x_\theta(z_t,t,t)&=\operatorname{net}_\theta(z_t,t,t)
+x_\theta(z_t,r,t)&=\mathrm{net}_\theta(z_t,r,t),\\
+x_\theta(z_t,t,t)&=\mathrm{net}_\theta(z_t,t,t)
 \end{aligned}
 $$
 

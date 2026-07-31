@@ -318,15 +318,15 @@ ReactVLA 的 action backbone 包含 16 个 AttnRes Transformer blocks，hidden s
   >
   > 设某个 attention head 中，Query 的第 $k$ 对维度为：
   >
-  > $\displaystyle \begin{bmatrix} q_{2k}\\ q_{2k+1} \end{bmatrix}.$
+  > $$\left[\genfrac{}{}{0pt}{}{q _{2k}}{q _{2k+1}}\right].$$
   >
   > 经过 RoPE 后：
   >
-  > $\displaystyle \begin{bmatrix} q'_{2k}\\ q'_{2k+1} \end{bmatrix} = \begin{bmatrix} \cos\theta_{p,k} & -\sin\theta_{p,k}\\ \sin\theta_{p,k} & \cos\theta_{p,k} \end{bmatrix} \begin{bmatrix} q_{2k}\\ q_{2k+1} \end{bmatrix}.$
+  > $$\left[\genfrac{}{}{0pt}{}{q' _{2k}}{q' _{2k+1}}\right] = \left[\genfrac{}{}{0pt}{}{\cos\theta _{p,k}\quad -\sin\theta _{p,k}}{\sin\theta _{p,k}\quad \cos\theta _{p,k}}\right] \left[\genfrac{}{}{0pt}{}{q _{2k}}{q _{2k+1}}\right].$$
   >
   > 展开就是：
   >
-  > $\displaystyle q'_{2k} = q_{2k}\cos\theta_{p,k} - q_{2k+1}\sin\theta_{p,k},$
+  > $$q' _{2k} = q _{2k}\cos\theta _{p,k} - q _{2k+1}\sin\theta _{p,k},$$
   >
   > Key 也进行相同的旋转：
   >
@@ -360,7 +360,7 @@ ReactVLA 的 action backbone 包含 16 个 AttnRes Transformer blocks，hidden s
   >
   > SwiGLU 首先进行两条不同的线性投影：
   >
-  > $\displaystyle \begin{aligned} g&=xW_g+b_g,\\ u&=xW_u+b_u. \end{aligned}$
+  > $$g=xW _g+b _g,\qquad u=xW _u+b _u.$$
   >
   > 在 ReactVLA 中，两条投影通常进入 FFN intermediate dimension：
   >
@@ -475,7 +475,7 @@ $$
 
 9. 使用 Pseudo-Huber loss：
 
-   $\displaystyle \mathcal L = \mathrm{PseudoHuber}_\delta (V_\theta-v_g)$
+   $$\mathcal L = \mathrm{PseudoHuber} _\delta (V _\theta-v _g)$$
 
 10. 更新模型参数 $\theta$ 。
 

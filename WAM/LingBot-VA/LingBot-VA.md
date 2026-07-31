@@ -55,9 +55,9 @@ LingBot-VA 采用了一个**基于 Flow Matching 的自回归扩散 Transformer 
 
 2. **噪声历史增强**：由于动作执行不需要完美的像素级重建，训练时会以 $p=0.5$ 的概率对模型所依赖的“过去视觉历史 $z_{\le t}$ ”注入插值噪声（ $s_{\mathrm{aug}}\in[0.5,1]$ ） 。这迫使动作解码器学会**在模糊的潜在表征下依然能鲁棒地提取出精确的动作特征**。
 
-3. **计算损失**：联合优化视频动力学损失 $\mathcal{L}_{\mathrm{dyn}}$ 和动作逆动力学损失 $\mathcal{L}_{\mathrm{inv}}$ ，二者均基于**均方误差**衡量预测速度与真实速度向量的差异 。
+3. **计算损失**：联合优化视频动力学损失 $\mathcal{L} _{\mathrm{dyn}}$ 和动作逆动力学损失 $\mathcal{L} _{\mathrm{inv}}$ ，二者均基于**均方误差**衡量预测速度与真实速度向量的差异 。
 
-   $\displaystyle \mathcal{L}=\mathcal{L}_{\mathrm{dyn}}+\lambda\mathcal{L}_{\mathrm{inv}}$
+   $$\mathcal{L}=\mathcal{L} _{\mathrm{dyn}}+\lambda\mathcal{L} _{\mathrm{inv}}$$
 
    后训练阶段还会额外引入一个基于正向动力学的对齐损失 $\mathcal{L}_{\mathrm{fdm}}$ 。
 

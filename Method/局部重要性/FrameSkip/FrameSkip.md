@@ -55,7 +55,7 @@ FrameSkip 的核心是给每一帧计算重要性分数。论文认为，一个�
 
 1. **AVI：Action Variation Importance（动作变化重要性）**
 
-   $\displaystyle AVI(t) = \|a_t - a_{t-1}\|_2 + \lambda \cdot MeanVar(a_{t+1:t+k})$
+   $$AVI(t) = \|a _t - a _{t-1}\| _2 + \lambda \cdot MeanVar(a _{t+1:t+k})$$
 
    其中：
    
@@ -73,7 +73,7 @@ FrameSkip 的核心是给每一帧计算重要性分数。论文认为，一个�
 
 2. **VAC：Visual-Action Coherence（视觉-动作一致性）**：
 
-   $\displaystyle VAC(t) = \frac{\|v_t - v_{t-1}\|_2}{\|a_t - a_{t-1}\|_2 + \epsilon}$
+   $$VAC(t) = \frac{\|v _t - v _{t-1}\| _2}{\|a _t - a _{t-1}\| _2 + \epsilon}$$
 
    其中：
    
@@ -231,7 +231,7 @@ FrameSkip 不会真正改写原始数据集，而是在 dataloader 中进行**�
 
 ##### B. 研究问题二：保留多少帧最合适？
 
-- **实验设置**：在 RoboCasa-GR1 上比较不同 retention ratio： $r\in\{10\%,20\%,30\%,40\%,50\%,60\%,100\%\}$
+- **实验设置**：在 RoboCasa-GR1 上比较不同 retention ratio： $r\in\lbrace \text{10％},\text{20％},\text{30％},\text{40％},\text{50％},\text{60％},\text{100％}\rbrace$
   
 - **实验结论**：所有 pruned settings 都超过 full-frame training，其中 $r=50\%$ 最好，但 $r=20\%\text{--}30\%$ 已经表现很强。
 
