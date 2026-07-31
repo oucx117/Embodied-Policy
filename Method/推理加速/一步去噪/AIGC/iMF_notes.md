@@ -18,34 +18,28 @@
    > CFG（Classifier-Free Guidance）可以理解为“让生成结果更听条件的话”。推理时，模型通常会做两次预测：
    >
    > 1. **conditional prediction**：带条件预测，例如在类别 / 文本条件 $c$ 下预测：
-
-$$
-v_{cond}=v_\theta(z_t,t|c)
-$$
-
+   >
+   >    $$
+   >    v_{cond}=v_\theta(z_t,t|c)
+   >    $$
    >
    > 2. **unconditional prediction**：不带条件预测，即去掉条件后的预测：
-
-$$
-v_{uncond}=v_\theta(z_t,t|\emptyset)
-$$
-
+   >
+   >    $$
+   >    v_{uncond}=v_\theta(z_t,t|\emptyset)
+   >    $$
    >
    > 然后用二者差值表示“条件带来的修正方向”：
    >
-
-$$
-v_{cond}-v_{uncond}
-$$
-
+   > $$
+   > v_{cond}-v_{uncond}
+   > $$
    >
    > 最终预测为：
    >
-
-$$
-v_{cfg} = v_{uncond} + s\cdot (v_{cond}-v_{uncond})
-$$
-
+   > $$
+   > v_{cfg} = v_{uncond} + s\cdot (v_{cond}-v_{uncond})
+   > $$
    >
    > 其中 $s$ 是 guidance scale。 $s$ 越大，模型越强调条件约束；但过大可能降低多样性，甚至导致生成失真。
    >
@@ -304,27 +298,27 @@ iMF 推理时非常简单，因为网络已经学会了 average velocity。对�
 
 1. 从噪声分布采样：
 
-$$
-z_1\sim \mathcal{N}(0,I)
-$$
+   $$
+   z_1\sim \mathcal{N}(0,I)
+   $$
 
 2. 设置目标区间：
 
-$$
-r=0,\quad t=1
-$$
+   $$
+   r=0,\quad t=1
+   $$
 
 3. 网络预测从 $t=1$ 到 $r=0$ 的 average velocity：
 
-$$
-u_\theta(z_1,0,1)
-$$
+   $$
+   u_\theta(z_1,0,1)
+   $$
 
 4. 一步生成数据：
 
-$$
-z_0=z_1-u_\theta(z_1,0,1)
-$$
+   $$
+   z_0=z_1-u_\theta(z_1,0,1)
+   $$
 
 > 这里符号方向与论文中的时间约定有关：论文采用 $z_t=(1-t)x+te$ ，所以 $t=1$ 是噪声， $t=0$ 是数据。从 $t=1$ 走到 $r=0$ ，就是从噪声生成数据。
 
@@ -346,43 +340,33 @@ iMF 最值得迁移的思路是：**用 iMF-style objective 训练 1-step action
 
 > 把图像生成中的数据 $x$ 换成 Fast-WAM 的 action chunk $a$ ，把噪声 $e$ 换成 action noise $\epsilon$ ：
 >
-
-$$
-z_t=(1-t)a+t\epsilon
-$$
-
+> $$
+> z_t=(1-t)a+t\epsilon
+> $$
 >
 > 让 action expert 输出 average velocity：
 >
-
-$$
-u_\theta(z_t,r,t \mid \text{world context})
-$$
-
+> $$
+> u_\theta(z_t,r,t \mid \text{world context})
+> $$
 >
 > 再构造：
 >
-
-$$
-V_\theta = u_\theta + (t-r)\mathrm{JVP}_{sg}(u_\theta;v_\theta)
-$$
-
+> $$
+> V_\theta = u_\theta + (t-r)\mathrm{JVP}_{sg}(u_\theta;v_\theta)
+> $$
 >
 > 并用：
 >
-
-$$
-\epsilon-a
-$$
-
+> $$
+> \epsilon-a
+> $$
 >
 > 作为 velocity target：
 >
-
-$$
-L = \left\| V_\theta-(\epsilon-a) \right\|^2
-$$
-
+> $$
+> L = \left\| V_\theta-(\epsilon-a) \right\|^2
+> $$
 >
 > 这样 action expert 不只是学习局部 velocity，而是学习在给定 world context 下，从 noisy action 一步跳到 clean action 所需的区间平均速度。
 
