@@ -71,11 +71,7 @@ $$
 >
 > pMF 认为，直接预测 average velocity $u$ 很难，**因为 $u$ 本质上是一个速度张量，不是图像本身，它表示“从 $r$ 到 $t$ 这段轨迹平均应该怎么移动”，所以显示出来不像自然图像**。相比之下，作者定义
 >
-
-$$
-x(z_t,r,t)=z_t-t\cdot u(z_t,r,t)
-$$
-
+> $\displaystyle x(z_t,r,t)=z_t-t\cdot u(z_t,r,t)$
 >
 > **这个 $x$ 是在用平均速度把当前 noisy image 往 denoised image 方向还原，因此更像 denoised image**。特别地，当 $r=0$ 时， $x$ 正好等于 ODE 终点的 clean image；当 $r=t$ 时， $x$ 退化为常见的 denoised image prediction。对于中间情况 $0<r<t$ ，论文没有给出严格证明，而是通过 Figure 1 的可视化说明：** $x$ 通常也比 $u$ 更像干净或略模糊的图像**。因此，pMF 选择让网络预测更接近图像流形的 $x$ ，再把 $x$ 转换成 $u$ 和 $V$ 来计算 velocity loss。
 >
@@ -226,21 +222,15 @@ pMF 推理时也是 one-step 形式。由于网络输出的是像素图像 $x_\t
 
 1. 从噪声分布采样：
 
-$$
-z_1\sim\mathcal{N}(0,I)
-$$
+   $$z_1\sim\mathcal{N}(0,I)$$
 
 2. 设置目标区间：
 
-$$
-r=0,\quad t=1
-$$
+   $$r=0,\quad t=1$$
 
 3. 网络直接预测像素图像：
 
-$$
-x_\theta(z_1,0,1)
-$$
+   $\displaystyle x_\theta(z_1,0,1)$
 
 > 这和 iMF 的推理略有不同：iMF 输出的是 average velocity，再用 $z_0=z_1-u_\theta$ 得到图像；pMF 直接输出 denoised image $x_\theta$ 。因此论文称它具有 “what-you-see-is-what-you-get” 的性质。
 
@@ -261,19 +251,11 @@ pMF 最值得迁移的思路是：**从 velocity prediction 改成 clean action 
 >
 > 然后再把 clean action prediction 转换成 average velocity：
 >
-
-$$
-u_\theta = \frac{z_t-\hat a}{t}
-$$
-
+> $\displaystyle u_\theta = \frac{z_t-\hat a}{t}$
 >
 > 最后仍然用 iMF / MeanFlow 的 velocity loss 来训练：
 >
-
-$$
-L = \left\| V_\theta-(\epsilon-a) \right\|^2
-$$
-
+> $$L = \left\| V_\theta-(\epsilon-a) \right\|^2$$
 >
 > 这样模型输出的是更容易解释、更接近执行目标的 clean action，但训练约束仍然保持 flow-consistent。
 

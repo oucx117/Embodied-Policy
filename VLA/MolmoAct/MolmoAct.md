@@ -52,9 +52,7 @@
 
    - **原理**：最后，模型在**同时以深度 $d$ 和轨迹 $\tau$ 为条件**的情况下，生成代表机器人下一个具体微操作的动作 Token 。完整的生成过程遵循以下概率链式法则：
 
-$$
-p(\mathbf{d},\boldsymbol{\tau},\mathbf{a}\mid I,T)=\prod_{i=1}^{M+2} p\left(d_{i}\mid I,T,\mathbf{d}_{<i}\right)\times\prod_{j=1}^{L} p\left(\tau_{j}\mid I,T,\mathbf{d},\boldsymbol{\tau}_{<j}\right)\times\prod_{k=1}^{D} p\left(a_{k}\mid I,T,\mathbf{d},\boldsymbol{\tau},\mathbf{a}_{<k}\right)
-$$
+     $\displaystyle p(\mathbf{d},\boldsymbol{\tau},\mathbf{a}\mid I,T)=\prod_{i=1}^{M+2} p\left(d_{i}\mid I,T,\mathbf{d}_{<i}\right)\times\prod_{j=1}^{L} p\left(\tau_{j}\mid I,T,\mathbf{d},\boldsymbol{\tau}_{<j}\right)\times\prod_{k=1}^{D} p\left(a_{k}\mid I,T,\mathbf{d},\boldsymbol{\tau},\mathbf{a}_{<k}\right)$
 
    - **目的**：确保最终执行的动作是深思熟虑的，即深深植根于对场景3D空间的理解和清晰的运动规划之上。
 

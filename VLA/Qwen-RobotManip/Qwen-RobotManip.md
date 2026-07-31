@@ -102,11 +102,7 @@ $$
 
    > base pose 搜索可以写成：
    >
-
-$$
-T_{\text{base}}^* = \arg\max_{T_{\text{base}}} \frac{1}{|\mathcal{K}|} \sum_{k \in \mathcal{K}} \mathbb{1} \left[ IK(T_{\text{base}}^{-1}T^{ee}_k) \text{ is feasible} \right]
-$$
-
+   > $\displaystyle T_{\text{base}}^* = \arg\max_{T_{\text{base}}} \frac{1}{|\mathcal{K}|} \sum_{k \in \mathcal{K}} \mathbb{1} \left[ IK(T_{\text{base}}^{-1}T^{ee}_k) \text{ is feasible} \right]$
    >
    > 其中 $\mathcal{K}$ 是覆盖轨迹空间极值的关键帧集合。这个目标的意思是：寻找一个机器人底座位置，使尽可能多的关键末端位姿可以被机器人 IK 到达。
 4. 在 MuJoCo 中用 IK 跟踪 retarget 后的末端轨迹并渲染机器人；
@@ -114,17 +110,9 @@ $$
 
    > 深度合成公式为：
    >
-
-$$
-M^{occ}_t = \mathbb{1}[D^{robot}_t \leq D_t]
-$$
-
+   > $\displaystyle M^{occ}_t = \mathbb{1}[D^{robot}_t \leq D_t]$
    >
-
-$$
-I^{syn}_t = M^{occ}_t \odot I^{robot}_t + (1-M^{occ}_t) \odot \hat{I}_t
-$$
-
+   > $\displaystyle I^{syn}_t = M^{occ}_t \odot I^{robot}_t + (1-M^{occ}_t) \odot \hat{I}_t$
    >
    > 其中：
    >

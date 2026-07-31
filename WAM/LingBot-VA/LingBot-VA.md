@@ -57,9 +57,7 @@ LingBot-VA 采用了一个**基于 Flow Matching 的自回归扩散 Transformer 
 
 3. **计算损失**：联合优化视频动力学损失 $\mathcal{L}_{\mathrm{dyn}}$ 和动作逆动力学损失 $\mathcal{L}_{\mathrm{inv}}$ ，二者均基于**均方误差**衡量预测速度与真实速度向量的差异 。
 
-$$
-\mathcal{L}=\mathcal{L}_{\mathrm{dyn}}+\lambda\mathcal{L}_{\mathrm{inv}}
-$$
+   $\displaystyle \mathcal{L}=\mathcal{L}_{\mathrm{dyn}}+\lambda\mathcal{L}_{\mathrm{inv}}$
 
    后训练阶段还会额外引入一个基于正向动力学的对齐损失 $\mathcal{L}_{\mathrm{fdm}}$ 。
 

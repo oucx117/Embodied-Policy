@@ -174,9 +174,7 @@ Embodied-R1 输出“指向”信号之后，需要进一步转化为机器人�
 
       - 根据下面的公式，计算并缓存每个 token 对应的优势值 $\hat{A}_{i,t}$
 
-$$
-\hat{A}_{i,t} = \frac{r(y_i,x) - \mathrm{mean}(\{r(y_1,x),\ldots,r(y_G,x)\})}{\mathrm{std}(\{r(y_1,x),\ldots,r(y_G,x)\})}
-$$
+        $\displaystyle \hat{A}_{i,t} = \frac{r(y_i,x) - \mathrm{mean}(\{r(y_1,x),\ldots,r(y_G,x)\})}{\mathrm{std}(\{r(y_1,x),\ldots,r(y_G,x)\})}$
 
   * **内循环：策略优化阶段**：内循环旨在对新策略 $\pi_{\theta}$ 进行 $K$ 次迭代更新，对于每一次迭代：
 
@@ -188,9 +186,7 @@ $$
 
       * 利用之前缓存的旧策略概率以及优势值，根据下式计算损失函数
 
-$$
-\mathcal{L}(\theta) = \frac{1}{G} \sum_{i=1}^{G} \sum_{t=1}^{|y_i|} \min\left[ \frac{\pi_{\theta}(y_{i,t} \mid x, y_{i,<t})}{\pi_{\theta_{\text{old}}}(y_{i,t} \mid x, y_{i,<t})} \hat{A}_{i,t}, \mathrm{clip}\left( \frac{\pi_{\theta}(y_{i,t} \mid x, y_{i,<t})}{\pi_{\theta_{\text{old}}}(y_{i,t} \mid x, y_{i,<t})}, 1-\epsilon, 1+\epsilon \right) \hat{A}_{i,t} \right]
-$$
+        $\displaystyle \mathcal{L}(\theta) = \frac{1}{G} \sum_{i=1}^{G} \sum_{t=1}^{|y_i|} \min\left[ \frac{\pi_{\theta}(y_{i,t} \mid x, y_{i,<t})}{\pi_{\theta_{\text{old}}}(y_{i,t} \mid x, y_{i,<t})} \hat{A}_{i,t}, \mathrm{clip}\left( \frac{\pi_{\theta}(y_{i,t} \mid x, y_{i,<t})}{\pi_{\theta_{\text{old}}}(y_{i,t} \mid x, y_{i,<t})}, 1-\epsilon, 1+\epsilon \right) \hat{A}_{i,t} \right]$
 
     * **第5步：更新策略**：反向传播，更新新策略 $\pi_{\theta}$ 参数
 

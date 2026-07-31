@@ -47,29 +47,21 @@ Fast-WAM 使用针对动作 token 和未来视频潜变量的联合流匹配 (Fl
 
 1. **时间步采样与加噪**：给定目标变量 $y$ （动作块 $a_{1:H}$ 或未来视频潜变量 $z_{1:T}$ ），采样高斯噪声 $\epsilon\sim\mathcal{N}(0,I)$ 和时间步 $t\in(0,1)$ ，构建插值样本：
 
-$$
-y_t=(1-t)y+t\epsilon
-$$
+   $$y_t=(1-t)y+t\epsilon$$
 
    其中时间步 $t$ 遵循对数正态分布噪声调度 。
 
 2. **视频协同训练 (Video Co-training)**：通过视频预测目标，促使视频 DiT 学习编码具有物理意义的运动和交互结构 。针对预训练 VAE 提取的未来视频帧潜在 token $z_{1:T}$ 优化速度场预测：
 
-$$
-\mathcal{L}_{\mathrm{vid}}=\mathcal{L}_{\mathrm{FM}}(z_{1:T})
-$$
+   $\displaystyle \mathcal{L}_{\mathrm{vid}}=\mathcal{L}_{\mathrm{FM}}(z_{1:T})$
 
 3. **动作预测学习**：针对动作序列优化标准流匹配目标：
 
-$$
-\mathcal{L}_{\mathrm{act}}=\mathcal{L}_{\mathrm{FM}}(a_{1:H})
-$$
+   $\displaystyle \mathcal{L}_{\mathrm{act}}=\mathcal{L}_{\mathrm{FM}}(a_{1:H})$
 
 4. **计算整体损失**：联合训练的总体损失函数平衡了动作学习和视频协同训练：
 
-$$
-\mathcal{L}=\mathcal{L}_{\mathrm{act}}+\lambda\mathcal{L}_{\mathrm{vid}}
-$$
+   $\displaystyle \mathcal{L}=\mathcal{L}_{\mathrm{act}}+\lambda\mathcal{L}_{\mathrm{vid}}$
 
    其中 $\lambda$ 用于平衡这两个任务的权重 。
 

@@ -55,9 +55,7 @@ FrameSkip 的核心是给每一帧计算重要性分数。论文认为，一个�
 
 1. **AVI：Action Variation Importance（动作变化重要性）**
 
-$$
-AVI(t) = \|a_t - a_{t-1}\|_2 + \lambda \cdot MeanVar(a_{t+1:t+k})
-$$
+   $\displaystyle AVI(t) = \|a_t - a_{t-1}\|_2 + \lambda \cdot MeanVar(a_{t+1:t+k})$
 
    其中：
    
@@ -75,9 +73,7 @@ $$
 
 2. **VAC：Visual-Action Coherence（视觉-动作一致性）**：
 
-$$
-VAC(t) = \frac{\|v_t - v_{t-1}\|_2}{\|a_t - a_{t-1}\|_2 + \epsilon}
-$$
+   $\displaystyle VAC(t) = \frac{\|v_t - v_{t-1}\|_2}{\|a_t - a_{t-1}\|_2 + \epsilon}$
 
    其中：
    
@@ -97,21 +93,15 @@ $$
 
    首先定义归一化进度：
 
-$$
-p_t = \frac{t - 1}{T - 1}
-$$
+   $$p_t = \frac{t - 1}{T - 1}$$
 
    FrameSkip 的具体做法是：对每个 benchmark，先**人工或规则**地标出**某个关键阶段（例如对齐、抓取、释放）的大致时间范围**，然后取这个时间范围的**中心帧**，将它换算成**归一化任务进度 $p$**。然后用**一维高斯混合模型**拟合这些关键阶段的中心位置:
 
-$$
-q(p) = \sum_{m=1}^{M} \pi_m \mathcal{N}(p; \mu_m, \sigma_m^2)
-$$
+   $\displaystyle q(p) = \sum_{m=1}^{M} \pi_m \mathcal{N}(p; \mu_m, \sigma_m^2)$
 
    $q(p)$ 表示**不同任务进度位置上出现关键阶段的概率密度**，即**表示当前帧所在的任务进度位置有多可能是关键操作阶段**，接着定义：
 
-$$
-TPI(t) = \frac{q(p_t)}{\max_s q(p_s)}
-$$
+   $\displaystyle TPI(t) = \frac{q(p_t)}{\max_s q(p_s)}$
 
    直观理解：
    
@@ -119,9 +109,7 @@ $$
 
    如果没有这类少量阶段标注，也可以直接使用**与数据集无关的高斯先验**：
 
-$$
-TPI(t) = \exp\left(-\frac{(p_t - 0.5)^2}{\sigma^2}\right)
-$$
+   $$TPI(t) = \exp\left(-\frac{(p_t - 0.5)^2}{\sigma^2}\right)$$
 
    它假设关键交互阶段更可能出现在**轨迹中部**，论文默认 $σ² = 0.2$ 。
    
@@ -129,9 +117,7 @@ $$
 
    三个指标会先在每条轨迹内部做 **min-max 归一化**，然后组合成总分：
 
-$$
-I(t) = \alpha \widehat{AVI}(t) + \beta \widehat{VAC}(t) + \gamma \widehat{TPI}(t)
-$$
+   $$I(t) = \alpha \widehat{AVI}(t) + \beta \widehat{VAC}(t) + \gamma \widehat{TPI}(t)$$
 
    默认权重为： $α = 0.6$ / $β = 0.2$ / $γ = 0.2$ ，即 FrameSkip 主要依赖 AVI，VAC 和 TPI 作为辅助信号。
 

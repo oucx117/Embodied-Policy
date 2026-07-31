@@ -162,9 +162,7 @@ clean prefix 能连接新旧 chunk，但也可能使模型只复制前序动作�
 1. 使用最新图像和语言指令计算 VLM KV Cache；
 2. 从标准高斯分布初始化 action chunk：
 
-$$
-\mathbf{a}^{\tau=0}_{t:t+T}\sim\mathcal{N}(\mathbf{0},\mathbf{I})
-$$
+   $$\mathbf{a}^{\tau=0}_{t:t+T}\sim\mathcal{N}(\mathbf{0},\mathbf{I})$$
 
 3. 执行 **5 步 Flow Matching**，将 $\tau$ 从 0 积分到 1；
 4. 输出连续的 $T$ 步 action chunk。

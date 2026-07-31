@@ -111,39 +111,27 @@ Action head 的主要配置为：4 层、hidden width 768、12 个 attention hea
 
 1. 采样高斯噪声：
 
-$$
-x_0\sim\mathcal N(0,I).
-$$
+   $$x_0\sim\mathcal N(0,I).$$
 
 2. 采样基础时间：
 
-$$
-u\sim U(0,1).
-$$
+   $$u\sim U(0,1).$$
 
 3. 使用 $\alpha$ 将时间向高噪声端偏移：
 
-$$
-t = \frac{u}{1+(\alpha-1)(1-u)}.
-$$
+   $$t = \frac{u}{1+(\alpha-1)(1-u)}.$$
 
 4. 构造 noisy action：
 
-$$
-x_t=t x_1+(1-t)x_0.
-$$
+   $\displaystyle x_t=t x_1+(1-t)x_0.$
 
 5. 模型预测瞬时速度：
 
-$$
-\hat v=v_\theta(x_t,t,c).
-$$
+   $\displaystyle \hat v=v_\theta(x_t,t,c).$
 
 6. 使用标准 Flow Matching loss：
 
-$$
-\mathcal L = \left\|\hat v-(x_1-x_0)\right\|_2^2.
-$$
+   $\displaystyle \mathcal L = \left\|\hat v-(x_1-x_0)\right\|_2^2.$
 
 7. 正常反向传播更新模型。
 
@@ -151,11 +139,7 @@ $$
 
 > OpenPI 使用相反的时间方向： $t_{\mathrm{op}}=1$ 为 noise、 $t_{\mathrm{op}}=0$ 为 clean。此时应使用：
 >
-
-$$
-t_{\mathrm{op,shifted}} = \frac{\alpha t_{\mathrm{op}}} {1+(\alpha-1)t_{\mathrm{op}}},
-$$
-
+> $\displaystyle t_{\mathrm{op,shifted}} = \frac{\alpha t_{\mathrm{op}}} {1+(\alpha-1)t_{\mathrm{op}}},$
 >
 > $\alpha > 1$ ，将样本向 $t_{\mathrm{op}}=1$ 偏移。迁移到其他代码库时，必须先确认时间方向。
 

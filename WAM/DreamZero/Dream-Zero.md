@@ -71,9 +71,7 @@ DREAMZERO 架构采用了一个**单一的端到端自回归 Diffusion Transform
 
 3. **计算损失并反向传播**：模型 $u_\theta$ 输出联合速度，并使用**均方误差**衡量预测速度与真实速度 $v^k=[z_1^k,a_1^k]-[z_0^k,a_0^k]$ 之间的差异：
 
-$$
-\mathcal{L}(\theta)=\mathbb{E}\left[\frac{1}{K}\sum_{k=1}^{K}w(t_k)\left\|u_\theta([z_{t_k}^k,a_{t_k}^k];C_k,c,q_k,t_k)-v^k\right\|_2^2\right]
-$$
+   $\displaystyle \mathcal{L}(\theta)=\mathbb{E}\left[\frac{1}{K}\sum_{k=1}^{K}w(t_k)\left\|u_\theta([z_{t_k}^k,a_{t_k}^k];C_k,c,q_k,t_k)-v^k\right\|_2^2\right]$
 
 **B. 闭环推理流程 (以单次前向传播为例)**
 

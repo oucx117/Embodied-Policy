@@ -267,29 +267,21 @@ $$
 > **RMSNorm 是什么？**
 >
 > 对于一个 hidden vector：
-
-$$
-x=[x_1,x_2,\dots,x_d]\in\mathbb R^d,
-$$
-
+>
+> $\displaystyle x=[x_1,x_2,\dots,x_d]\in\mathbb R^d,$
+>
 > RMSNorm 首先计算均方根：
-
-$$
-\mathrm{RMS}(x) = \sqrt{ \frac{1}{d}\sum_{j=1}^{d}x_j^2+\epsilon }.
-$$
-
+>
+> $\displaystyle \mathrm{RMS}(x) = \sqrt{ \frac{1}{d}\sum_{j=1}^{d}x_j^2+\epsilon }.$
+>
 > 然后归一化并乘以可学习的缩放参数 $\gamma$ ：
-
-$$
-\mathrm{RMSNorm}(x) = \gamma\odot \frac{x} {\sqrt{ \frac{1}{d}\sum_{j=1}^{d}x_j^2+\epsilon }}.
-$$
-
+>
+> $\displaystyle \mathrm{RMSNorm}(x) = \gamma\odot \frac{x} {\sqrt{ \frac{1}{d}\sum_{j=1}^{d}x_j^2+\epsilon }}.$
+>
 > ReactVLA 中：
-
-$$
-d=768,\qquad \epsilon=10^{-6}.
-$$
-
+>
+> $$d=768,\qquad \epsilon=10^{-6}.$$
+>
 > **RMSNorm 归一化可以避免某个历史层仅仅因为 hidden vector 数值幅度较大，就获得更高的路由分数**。这样更多反映表示的方向和内容是否重要，而不是它的绝对数值大小。
 
 简单理解：
@@ -309,67 +301,49 @@ ReactVLA 的 action backbone 包含 16 个 AttnRes Transformer blocks，hidden s
   > **第一步：给不同维度设置不同频率**
   >
   > 将每个 attention head 的 96 个维度两两分组：
-
-$$
-(0,1),(2,3),\dots,(94,95).
-$$
-
+  >
+  > $$(0,1),(2,3),\dots,(94,95).$$
+  >
   > 第 $k$ 组的旋转频率为：
-
-$$
-\omega_k = \frac{1}{B^{2k/d_h}} = 10000^{-2k/96}, \qquad k=0,1,\dots,47.
-$$
-
+  >
+  > $\displaystyle \omega_k = \frac{1}{B^{2k/d_h}} = 10000^{-2k/96}, \qquad k=0,1,\dots,47.$
+  >
   > **第二步：根据 token 位置计算旋转角**
   >
   > 假设当前 token 的序列位置为 $p$ ，那么第 $k$ 组维度的旋转角度为：
-
-$$
-\theta_{p,k}=p\omega_k.
-$$
-
+  >
+  > $\displaystyle \theta_{p,k}=p\omega_k.$
+  >
   > **第三步：旋转 Query 和 Key**
   >
   > 设某个 attention head 中，Query 的第 $k$ 对维度为：
-
-$$
-\begin{bmatrix} q_{2k}\\ q_{2k+1} \end{bmatrix}.
-$$
-
+  >
+  > $\displaystyle \begin{bmatrix} q_{2k}\\ q_{2k+1} \end{bmatrix}.$
+  >
   > 经过 RoPE 后：
-
-$$
-\begin{bmatrix} q'_{2k}\\ q'_{2k+1} \end{bmatrix} = \begin{bmatrix} \cos\theta_{p,k} & -\sin\theta_{p,k}\\ \sin\theta_{p,k} & \cos\theta_{p,k} \end{bmatrix} \begin{bmatrix} q_{2k}\\ q_{2k+1} \end{bmatrix}.
-$$
-
+  >
+  > $\displaystyle \begin{bmatrix} q'_{2k}\\ q'_{2k+1} \end{bmatrix} = \begin{bmatrix} \cos\theta_{p,k} & -\sin\theta_{p,k}\\ \sin\theta_{p,k} & \cos\theta_{p,k} \end{bmatrix} \begin{bmatrix} q_{2k}\\ q_{2k+1} \end{bmatrix}.$
+  >
   > 展开就是：
-
-$$
-q'_{2k} = q_{2k}\cos\theta_{p,k} - q_{2k+1}\sin\theta_{p,k},
-$$
-
+  >
+  > $\displaystyle q'_{2k} = q_{2k}\cos\theta_{p,k} - q_{2k+1}\sin\theta_{p,k},$
+  >
   > Key 也进行相同的旋转：
-
-$$
-k'_p=R_p k_p.
-$$
-
+  >
+  > $\displaystyle k'_p=R_p k_p.$
+  >
   > Value 通常不使用 RoPE。
   >
   > **为什么旋转可以表示位置？**
   >
   > 假设两个 token 的位置分别为 $p$ 和 $q$ ，旋转后的 attention 内积满足：
-
-$$
-(R_pq_p)^\top(R_qk_q) = q_p^\top R_{q-p}k_q.
-$$
-
+  >
+  > $\displaystyle (R_pq_p)^\top(R_qk_q) = q_p^\top R_{q-p}k_q.$
+  >
   > 因此，最终 attention score 自然依赖：
-
-$$
-q-p,
-$$
-
+  >
+  > $$q-p,$$
+  >
   > 也就是两个 token 的**相对位置**，而不是只依赖各自的绝对位置。
 
 - SwiGLU FFN，intermediate dimension 为 2048；
@@ -377,56 +351,37 @@ $$
   > **SwiGLU 不只是一个普通激活函数，而是一种带门控机制的 FFN 结构（Swish-Gated Linear Unit）**。
   >
   > 其中真正的基础激活函数是 SiLU / Swish：
-
-$$
-\mathrm{SiLU}(x) = x\sigma(x) = \frac{x}{1+e^{-x}}.
-$$
-
+  >
+  > $$\mathrm{SiLU}(x) = x\sigma(x) = \frac{x}{1+e^{-x}}.$$
+  >
   > 对于输入 hidden state：
-
-$$
-x\in\mathbb R^{768},
-$$
-
+  >
+  > $$x\in\mathbb R^{768},$$
+  >
   > SwiGLU 首先进行两条不同的线性投影：
-
-$$
-\begin{aligned}
-g&=xW_g+b_g,\\
-u&=xW_u+b_u.
-\end{aligned}
-$$
-
+  >
+  > $\displaystyle \begin{aligned} g&=xW_g+b_g,\\ u&=xW_u+b_u. \end{aligned}$
+  >
   > 在 ReactVLA 中，两条投影通常进入 FFN intermediate dimension：
-
-$$
-g,u\in\mathbb R^{2048}.
-$$
-
+  >
+  > $$g,u\in\mathbb R^{2048}.$$
+  >
   > 然后对其中一条使用 SiLU，并与另一条逐元素相乘：
-
-$$
-h = \mathrm{SiLU}(g)\odot u.
-$$
-
+  >
+  > $$h = \mathrm{SiLU}(g)\odot u.$$
+  >
   > 可以理解为：
-
-$$
-\text{输出特征} = \text{候选内容} \times \text{软门控权重}.
-$$
-
+  >
+  > $$\text{输出特征} = \text{候选内容} \times \text{软门控权重}.$$
+  >
   > 最后投影回原来的 hidden size：
-
-$$
-\mathrm{SwiGLU}(x) = \left[ \mathrm{SiLU}(xW_g+b_g) \odot (xW_u+b_u) \right]W_d+b_d.
-$$
-
+  >
+  > $\displaystyle \mathrm{SwiGLU}(x) = \left[ \mathrm{SiLU}(xW_g+b_g) \odot (xW_u+b_u) \right]W_d+b_d.$
+  >
   > 对应维度是：
-
-$$
-768 \xrightarrow[]{W_g,W_u} 2048 \xrightarrow[]{\text{逐元素门控}} 2048 \xrightarrow[]{W_d} 768.
-$$
-
+  >
+  > $\displaystyle 768 \xrightarrow[]{W_g,W_u} 2048 \xrightarrow[]{\text{逐元素门控}} 2048 \xrightarrow[]{W_d} 768.$
+  >
 #### 3. AttnRes 与 iMF 的关系
 
 AttnRes 不是 iMF 必需组成部分，而是 ReactVLA 为 low-step action generation 额外设计的 backbone enhancement。论文的解释是：当推理步数降低后，每次 action model evaluation 必须一次性完成更多生成工作，因此更依赖完整、稳定的 multimodal context。
@@ -488,57 +443,39 @@ $$
 
 1. 编码多模态条件：
 
-$$
-h_{ctx}=\mathrm{AttnResTransformer}_\theta(C)
-$$
+   $\displaystyle h_{ctx}=\mathrm{AttnResTransformer}_\theta(C)$
 
 2. 采样 Gaussian noise：
 
-$$
-e\sim\mathcal N(0,I)
-$$
+   $$e\sim\mathcal N(0,I)$$
 
 3. 从 Logit-Normal distribution 采样 $r,t$ ，排序后保证 $r\le t$ ；以 0.5 概率令 $r=t$ 。
 
 4. 构造 noisy action：
 
-$$
-z_t=(1-t)x+te
-$$
+   $$z_t=(1-t)x+te$$
 
 5. 构造已知的 instantaneous velocity target：
 
-$$
-v_g=e-x
-$$
+   $$v_g=e-x$$
 
 6. 令同一个 average-velocity network 在零长度区间预测瞬时速度：
 
-$$
-v_\theta=u_\theta(z_t,t,t\mid h_{ctx})
-$$
+   $\displaystyle v_\theta=u_\theta(z_t,t,t\mid h_{ctx})$
 
 7. 计算区间平均速度及其 JVP：
 
-$$
-u_\theta=u_\theta(z_t,r,t\mid h_{ctx})
-$$
+   $\displaystyle u_\theta=u_\theta(z_t,r,t\mid h_{ctx})$
 
-$$
-\dot u_\theta = \mathrm{JVP} \left( u_\theta, (z_t,r,t), (v_\theta,0,1) \right)
-$$
+   $\displaystyle \dot u_\theta = \mathrm{JVP} \left( u_\theta, (z_t,r,t), (v_\theta,0,1) \right)$
 
 8. 构造 corrected velocity prediction：
 
-$$
-V_\theta = u_\theta+(t-r)\mathrm{sg}(\dot u_\theta)
-$$
+   $\displaystyle V_\theta = u_\theta+(t-r)\mathrm{sg}(\dot u_\theta)$
 
 9. 使用 Pseudo-Huber loss：
 
-$$
-\mathcal L = \mathrm{PseudoHuber}_\delta (V_\theta-v_g)
-$$
+   $\displaystyle \mathcal L = \mathrm{PseudoHuber}_\delta (V_\theta-v_g)$
 
 10. 更新模型参数 $\theta$ 。
 

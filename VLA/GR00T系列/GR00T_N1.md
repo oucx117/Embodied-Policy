@@ -68,9 +68,7 @@ GR00T N1 需要支持从单臂机械臂、双臂机械臂到 humanoid robot 的�
   - 将 noised action chunk $A_t^\tau$ 编码为动作 token 序列。
   - 与 `π0` 类似，动作生成采用 action chunking，一次处理：
 
-$$
-A_t=[a_t,a_{t+1},\ldots,a_{t+H-1}]
-$$
+    $\displaystyle A_t=[a_t,a_{t+1},\ldots,a_{t+H-1}]$
 
     其中 GR00T N1 设置 $H=16$ 。
 
@@ -108,21 +106,15 @@ GR00T N1 的动作模块是一个基于 DiT 的 flow-matching policy。它通过
 2. **采样时间步 $\tau$**：从设定的 Beta 分布中采样 flow matching 时间步 $\tau\in[0,1]$ ；
 3. **加噪**：采样高斯噪声 $\epsilon\sim\mathcal{N}(0,I)$ ，构造带噪动作块：
 
-$$
-A_t^\tau=\tau A_t+(1-\tau)\epsilon
-$$
+   $\displaystyle A_t^\tau=\tau A_t+(1-\tau)\epsilon$
 
 4. **模型预测向量场**：将视觉语言特征 $\phi_t$ 、机器人状态 $q_t$ 和带噪动作块 $A_t^\tau$ 输入 DiT，得到预测向量场：
 
-$$
-V_\theta(\phi_t,A_t^\tau,q_t)
-$$
+   $\displaystyle V_\theta(\phi_t,A_t^\tau,q_t)$
 
 5. **计算 Flow Matching 损失**：模型目标是拟合从带噪动作到真实动作的 denoising vector field，论文中的损失为：
 
-$$
-\mathcal{L}_{\mathrm{FM}}(\theta)=\mathbb{E}_\tau\left[\left\|V_\theta(\phi_t,A_t^\tau,q_t)-(\epsilon-A_t)\right\|_2^2\right]
-$$
+   $\displaystyle \mathcal{L}_{\mathrm{FM}}(\theta)=\mathbb{E}_\tau\left[\left\|V_\theta(\phi_t,A_t^\tau,q_t)-(\epsilon-A_t)\right\|_2^2\right]$
 
 6. **联合优化**：VLM 与 DiT 紧密耦合训练。训练细节中，DiT、视觉编码器和 embodiment-specific adapter 模块会参与训练；语言相关部分保持冻结或基本不更新（LLM主干），以保留预训练 VLM 的语言能力。
 
@@ -132,15 +124,11 @@ $$
 2. **编码机器人状态**：机器人状态 $q_t$ 经过 embodiment-specific State Encoder；
 3. **初始化动作噪声**：
 
-$$
-A_t^0\sim\mathcal{N}(0,I)
-$$
+   $$A_t^0\sim\mathcal{N}(0,I)$$
 
 4. **K 步去噪**：使用 forward Euler integration 更新动作块：
 
-$$
-A_t^{\tau+1/K}=A_t^\tau+\frac{1}{K}V_\theta(\phi_t,A_t^\tau,q_t)
-$$
+   $\displaystyle A_t^{\tau+1/K}=A_t^\tau+\frac{1}{K}V_\theta(\phi_t,A_t^\tau,q_t)$
 
 5. **输出动作块**：经过 $K$ 步后输出长度为 $H=16$ 的动作块。论文中发现 `K=4` 在多种 embodiment 上效果较好。
 

@@ -18,9 +18,7 @@
 
 * 加噪公式：
 
-$$
-x_t=\sqrt{\alpha_t}\,x_{t-1}+\sqrt{1-\alpha_t}\,\epsilon
-$$
+  $\displaystyle x_t=\sqrt{\alpha_t}\,x_{t-1}+\sqrt{1-\alpha_t}\,\epsilon$
 
 ​	实际加噪时，并不是按顺序一步一步迭代的，而是一步到位： $x_t=\sqrt{\bar{\alpha}_t}\,x_0+\sqrt{1-\bar{\alpha}_t}\,\epsilon$
 
@@ -45,29 +43,21 @@ $$
 
     * 理想推导：直接求解后验分布 $p(x_{t-1}\mid x_t)$ 十分困难，因此我们转而求解一个在数学上可行的“理想”问题：在已知 $x_0$ （初始图）的情况下，求解 $p(x_{t-1}\mid x_t,x_0)$ ；由于引入了 $x_0$ 这个锚点，并利用马尔可夫性质，这个问题可以被分解为一堆已知的高斯分布，从而推导出一个精确的均值公式（其中 $\bar{\alpha}_t=\prod_{i=1}^{t}\alpha_i$ ）：
 
-$$
-\mu_t(x_t,x_0)=\frac{\sqrt{\bar{\alpha}_{t-1}}(1-\alpha_t)}{1-\bar{\alpha}_t}x_0+\frac{\sqrt{\alpha_t}(1-\bar{\alpha}_{t-1})}{1-\bar{\alpha}_t}x_t
-$$
+      $\displaystyle \mu_t(x_t,x_0)=\frac{\sqrt{\bar{\alpha}_{t-1}}(1-\alpha_t)}{1-\bar{\alpha}_t}x_0+\frac{\sqrt{\alpha_t}(1-\bar{\alpha}_{t-1})}{1-\bar{\alpha}_t}x_t$
 
     * 现实逼近：为了得到 $p(x_{t-1}\mid x_t)$ ，我们需要消去均值公式中的 $x_0$ 项，考虑到
 
-$$
-x_t=\sqrt{\bar{\alpha}_t}\,x_0+\sqrt{1-\bar{\alpha}_t}\,\epsilon
-$$
+      $\displaystyle x_t=\sqrt{\bar{\alpha}_t}\,x_0+\sqrt{1-\bar{\alpha}_t}\,\epsilon$
 
       上式可通过嵌套加噪公式，并结合 $\mathcal{N}(0,\sigma_1^2)+\mathcal{N}(0,\sigma_2^2)=\mathcal{N}(0,\sigma_1^2+\sigma_2^2)$ 求得；由于真实的噪声 $\epsilon$ 在去噪过程并不知道，所以我们用预测噪声 $\epsilon_\theta(x_t,t)$ 近似；通过联合上面两式消去 $x_0$ ，可以得到：
 
-$$
-\mu_t\approx\frac{1}{\sqrt{\alpha_t}}\left(x_t-\frac{1-\alpha_t}{\sqrt{1-\bar{\alpha}_t}\,}\epsilon_\theta(x_t,t)\right)
-$$
+      $\displaystyle \mu_t\approx\frac{1}{\sqrt{\alpha_t}}\left(x_t-\frac{1-\alpha_t}{\sqrt{1-\bar{\alpha}_t}\,}\epsilon_\theta(x_t,t)\right)$
 
       这个均值本质上是对我们真正想求的 $p(x_{t-1}\mid x_t)$ 的一个高质量近似解。
 
     * 去噪公式：
 
-$$
-x_{t-1}=\frac{1}{\sqrt{\alpha_t}}\left(x_t-\frac{1-\alpha_t}{\sqrt{1-\bar{\alpha}_t}\,}\epsilon_\theta(x_t,t)\right)+\sqrt{1-\alpha_t}\,z
-$$
+      $\displaystyle x_{t-1}=\frac{1}{\sqrt{\alpha_t}}\left(x_t-\frac{1-\alpha_t}{\sqrt{1-\bar{\alpha}_t}\,}\epsilon_\theta(x_t,t)\right)+\sqrt{1-\alpha_t}\,z$
 
       其中前半部分对应刚刚所求的均值，表示还原后的结果，而后半部分是一个微小噪声，用于增加生成的多样性。
 
