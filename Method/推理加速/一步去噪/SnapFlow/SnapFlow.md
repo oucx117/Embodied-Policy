@@ -67,15 +67,15 @@ s = 0, t = 1：
 
 然后**把这两个局部速度取平均，作为从 t=1 到 t=0 的近似平均速度**：
 
-```text
-v_target ≈ (v1 + v0.5) / 2
-```
+$$
+v_{\mathrm{target}} \approx \frac{v_1+v_{0.5}}{2}
+$$
 
 这个 v_target 就是一步生成模式要学习的目标：
 
-```text
-Fθ(x1, s=0, t=1 | c) ≈ v_target
-```
+$$
+F_\theta(x_1,s=0,t=1\mid c) \approx v_{\mathrm{target}}
+$$
 
 也就是说，SnapFlow 的 self-distillation 可以理解为：
 

@@ -391,7 +391,10 @@ $$
   > SwiGLU 首先进行两条不同的线性投影：
 
 $$
-g=xW_g+b_g,\\ u=xW_u+b_u.
+\begin{aligned}
+g&=xW_g+b_g,\\
+u&=xW_u+b_u.
+\end{aligned}
 $$
 
   > 在 ReactVLA 中，两条投影通常进入 FFN intermediate dimension：
@@ -437,7 +440,10 @@ AttnRes 不是 iMF 必需组成部分，而是 ReactVLA 为 low-step action gene
 ReactVLA 不使用普通 MSE（ $\left\|V_\theta - v_g\right\|^2$ ），而是用 Pseudo-Huber Loss 监督修正后的瞬时速度：
 
 $$
-e=V_\theta(z_t,r,t)-v_g,\\ \mathcal L(\theta) = \frac{1}{D} \sum_{d=1}^{D}\delta^2 \left( \sqrt{1+\left(\frac{e_d}{\delta}\right)^2}-1 \right).
+\begin{aligned}
+e&=V_\theta(z_t,r,t)-v_g,\\
+\mathcal L(\theta)&=\frac{1}{D}\sum_{d=1}^{D}\delta^2\left(\sqrt{1+\left(\frac{e_d}{\delta}\right)^2}-1\right).
+\end{aligned}
 $$
 
 > 文中默认 $\delta=1$

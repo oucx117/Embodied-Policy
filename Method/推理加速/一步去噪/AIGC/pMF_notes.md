@@ -167,7 +167,10 @@ $$
 pMF 的网络不直接预测 velocity，而是直接输出：
 
 $$
-x_\theta(z_t,r,t) = net_\theta(z_t,r,t) \\ x_\theta(z_t,t,t) = net_\theta(z_t,t,t)
+\begin{aligned}
+x_\theta(z_t,r,t)&=\operatorname{net}_\theta(z_t,r,t),\\
+x_\theta(z_t,t,t)&=\operatorname{net}_\theta(z_t,t,t)
+\end{aligned}
 $$
 
 这个输出可以理解为当前 noisy input $z_t$ 对应的 denoised image-like prediction。
@@ -177,7 +180,10 @@ $$
 根据 $x=z_t-t\cdot u$ ，得到：
 
 $$
-u_\theta(z_t,r,t) = \frac{z_t-x_\theta(z_t,r,t)}{t} \\ v_\theta(z_t,t) = u_\theta(z_t,t,t) = \frac{z_t-x_\theta(z_t,t,t)}{t}
+\begin{aligned}
+u_\theta(z_t,r,t)&=\frac{z_t-x_\theta(z_t,r,t)}{t},\\
+v_\theta(z_t,t)&=u_\theta(z_t,t,t)=\frac{z_t-x_\theta(z_t,t,t)}{t}
+\end{aligned}
 $$
 
 这一步把网络输出的 denoised image 转换成 MeanFlow 需要的 average velocity。

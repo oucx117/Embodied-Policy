@@ -72,7 +72,7 @@ MSK 的作用是：根据动作信号本身的**局部复杂度**，自动找出
 
    仅靠高频变化还不够，因为有些关键操作不一定表现为明显高频震荡，而是表现为**轨迹几何形状发生弯折**。例如机器人原本沿直线靠近，但突然需要绕开、调整角度、改变接触方向，这类情况可能不一定有非常强的高频信号，但**轨迹相对直线参考会出现明显偏离**。
 
-   因此 SkiP 额外计算一个 **bend score**：仍以每个时间步 `t` 为中心，取一个**长度为 16 的动作窗口**，将窗口起点和终点连成一条“如果它是直线运动，本该走的路径” `L`。然后计算窗口内**每个点到 `L` 的距离**，并**除以 `L` 的长度**，得到该点相对直线运动路径的归一化偏离程度。最后对窗口内所有点的归一化偏离取**平均**，作为以 `t` 为中心的局部窗口的弯折程度。如果该 bend score 超过预设阈值 **`0.3`**，就认为 `t` 附近发生了明显弯折，于是将中心时间步 `t` 标记为 **bend keyframe**。之后对该 keyframe 做 `±2-step expansion`，即**把 `[t-2, t+2]` 范围内的时间步都加入 key segment**，相邻或重叠的扩展片段最终**合并**为连续的 key segment。
+   因此 SkiP 额外计算一个 **bend score**：仍以每个时间步 $t$ 为中心，取一个**长度为 16 的动作窗口**，将窗口起点和终点连成一条“如果它是直线运动，本该走的路径” $L$ 。然后计算窗口内**每个点到 $L$ 的距离**，并**除以 $L$ 的长度**，得到该点相对直线运动路径的归一化偏离程度。最后对窗口内所有点的归一化偏离取**平均**，作为以 $t$ 为中心的局部窗口的弯折程度。如果该 bend score 超过预设阈值 **$0.3$**，就认为 $t$ 附近发生了明显弯折，于是将中心时间步 $t$ 标记为 **bend keyframe**。之后对该 keyframe 做 `±2-step expansion`，即**把 $[t-2,t+2]$ 范围内的时间步都加入 key segment**，相邻或重叠的扩展片段最终**合并**为连续的 key segment。
 
 3. **Heuristic keyframes（启发式关键帧）**
 
@@ -84,7 +84,7 @@ MSK 的作用是：根据动作信号本身的**局部复杂度**，自动找出
 最终的 key segment 是三类结果的**并集**：
 
 $$
-\text{key segment = 频谱高频片段 ∪ 几何弯折片段 ∪ 启发式关键点邻域}
+\text{key segment}=\text{频谱高频片段}\cup\text{几何弯折片段}\cup\text{启发式关键点邻域}
 $$
 
 剩下的时间步就是 skip segment。
@@ -135,7 +135,7 @@ SkiP 的训练和使用可以分为两个阶段：**离线轨迹标注与重标�
 
 ##### B. 构造 SkiP 训练样本
 
-给定一个训练时间步 `i`，SkiP 根据 Action Relabeling 构造 target chunk。
+给定一个训练时间步 $i$ ，SkiP 根据 Action Relabeling 构造 target chunk。
 
 ##### C. Policy 训练
 
@@ -210,7 +210,7 @@ SkiP 在多个 benchmark、多个 policy backbone 和多个 observation modality
 
 - **实验设置**：消融 MSK 中的不同组成部分，例如只用高频能量、加入 bend score、加入 heuristic keyframes、改变 DCT window size 和 quantile threshold。
 
-- **实验结论**：**完整 MSK 效果最好**。高频能量能够捕捉局部快速变化，bend score 能补充几何轨迹弯折，heuristic keyframes 能保证 gripper state 变化等关键事件不被漏掉。默认设置中，DCT window size 为 `W=16`，quantile threshold 为 `q=0.75`。
+- **实验结论**：**完整 MSK 效果最好**。高频能量能够捕捉局部快速变化，bend score 能补充几何轨迹弯折，heuristic keyframes 能保证 gripper state 变化等关键事件不被漏掉。默认设置中，DCT window size 为 $W=16$ ，quantile threshold 为 $q=0.75$ 。
 
 ##### E. 研究问题五：SkiP 是否真的学到了 skip 和 refine 两种模式？
 

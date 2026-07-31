@@ -207,7 +207,7 @@
 
 ## WAM：从 Reactive Policy 到 Predictive Policy
 
-> 研究动机：VLA 通常是 reactive mapping，即从当前观测和语言直接输出动作 `p(a | o, l)`，但不显式建模“如果执行某个动作，世界会如何变化”。这在长时程任务、接触丰富任务、遮挡场景、失败恢复和物理常识推理中会受限。WAM 定义为联合预测未来状态和动作的 embodied foundation model，即建模 `p(o', a | o, l)`，目标是让 Policy 具备 physical foresight。
+> 研究动机：VLA 通常是 reactive mapping，即从当前观测和语言直接输出动作 $p(a\mid o,l)$ ，但不显式建模“如果执行某个动作，世界会如何变化”。这在长时程任务、接触丰富任务、遮挡场景、失败恢复和物理常识推理中会受限。WAM 定义为联合预测未来状态和动作的 embodied foundation model，即建模 $p(o',a\mid o,l)$ ，目标是让 Policy 具备 physical foresight。
 
 ### 代表工作（关注 Joint WAM 中的 Diffusion-based Generation）
 

@@ -10,7 +10,7 @@
 
 ### 二. GR00T N1 模型
 
-GR00T N1 是一个面向通用 humanoid robot 的 VLA 模型，输入为图像观测、语言指令和机器人状态，输出为连续的动作。公开模型 **GR00T-N1-2B** 总参数量约 **2.2B**，其中 VLM 部分约 **1.34B**。模型一次生成长度为 `H=16` 的动作块，在 NVIDIA L40 GPU 上使用 bf16 推理一个动作块的时间约为 **63.9ms**。
+GR00T N1 是一个面向通用 humanoid robot 的 VLA 模型，输入为图像观测、语言指令和机器人状态，输出为连续的动作。公开模型 **GR00T-N1-2B** 总参数量约 **2.2B**，其中 VLM 部分约 **1.34B**。模型一次生成长度为 $H=16$ 的动作块，在 NVIDIA L40 GPU 上使用 bf16 推理一个动作块的时间约为 **63.9ms**。
 
 ![model](./images/model.png)
 
@@ -37,7 +37,7 @@ GR00T N1 是一个面向通用 humanoid robot 的 VLA 模型，输入为图像�
 GR00T N1 使用 **Eagle-2 VLM** 编码视觉和语言输入。Eagle-2 由 SmolLM2 LLM 和 SigLIP-2 图像编码器组成，并在大规模视觉语言任务上完成对齐。
 
 - **图像输入**：
-  - 图像分辨率为 `224 × 224`。
+  - 图像分辨率为 $224\times224$ 。
   - 图像经过 SigLIP-2 编码后，再经过 pixel shuffle。
   - 每帧图像最终得到 **64 个 image token embeddings**。
 
@@ -59,18 +59,20 @@ GR00T N1 需要支持从单臂机械臂、双臂机械臂到 humanoid robot 的�
 
 - **状态编码器（State Encoder）**：
   - 每个 embodiment 使用一个 MLP。
-  - 将该 embodiment 的机器人状态 `q_t` 投影到**统一的 DiT embedding 空间**。
+  - 将该 embodiment 的机器人状态 $q_t$ 投影到**统一的 DiT embedding 空间**。
   - 状态可以包括 joint positions、joint velocities、base position、EEF poses 等。
 
 - **动作编码器（Action Encoder）**：
   - 每个 embodiment 使用一个 MLP。
   - 输入为带噪动作向量和 flow matching 时间步。
-  - 将 noised action chunk `A_t^τ` 编码为动作 token 序列。
+  - 将 noised action chunk $A_t^\tau$ 编码为动作 token 序列。
   - 与 `π0` 类似，动作生成采用 action chunking，一次处理：
-    ```text
-    A_t = [a_t, a_t+1, …, a_t+H-1]
-    ```
-    其中 GR00T N1 设置 `H=16`。
+
+$$
+A_t=[a_t,a_{t+1},\ldots,a_{t+H-1}]
+$$
+
+    其中 GR00T N1 设置 $H=16$ 。
 
 - **动作解码器（Action Decoder）**：
   - 每个 embodiment 使用专属 MLP 解码器。
@@ -83,15 +85,15 @@ GR00T N1 需要支持从单臂机械臂、双臂机械臂到 humanoid robot 的�
 GR00T N1 的动作模块是一个基于 DiT 的 flow-matching policy。它通过交替的 self-attention 和 cross-attention block 同时处理动作、状态与视觉语言条件。
 
 - **Self-Attention**：
-  - 作用在 noised action token embeddings `A_t^τ` 和 state embeddings `q_t` 上。
+  - 作用在 noised action token embeddings $A_t^\tau$ 和 state embeddings $q_t$ 上。
   - 负责建模动作块内部的时序关系以及动作与本体状态之间的耦合。
 
 - **Cross-Attention**：
-  - 让动作 token attend 到 VLM 输出的视觉语言 token embeddings `φ_t`。
+  - 让动作 token attend 到 VLM 输出的视觉语言 token embeddings $\phi_t$ 。
   - 负责把任务语义、目标物体、空间关系等高层信息注入到低层动作生成中。
 
 - **输出层**：
-  - DiT 最终输出 `H` 个动作 token。
+  - DiT 最终输出 $H$ 个动作 token。
   - embodiment-specific Action Decoder 将这些 token 转换成对应机器人的 motor actions。
 
 > 与 `π0` 中“单一 Transformer + Action Expert”的设计不同，GR00T N1 更明确地采用 **VLM + DiT** 的组合式结构：VLM 作为 System 2 提供语义条件，DiT 作为 System 1 负责动作去噪和运动生成。
@@ -102,35 +104,45 @@ GR00T N1 的动作模块是一个基于 DiT 的 flow-matching policy。它通过
 
 **训练流程**：GR00T N1 使用 action flow matching 训练动作生成模块，并将多种数据来源统一成“状态、图像、语言 `→` 动作”的监督格式。
 
-1. **取真实动作块**：从数据集中采样观测、语言指令、机器人状态和真实动作块 `(φ_t, q_t, A_t)`；
-2. **采样时间步 `τ`**：从设定的 Beta 分布中采样 flow matching 时间步 `τ ∈ [0,1]`；
-3. **加噪**：采样高斯噪声 `ε ~ N(0,I)`，构造带噪动作块：
-   ```text
-   A_t^τ = τ A_t + (1-τ)ε
-   ```
-4. **模型预测向量场**：将视觉语言特征 `φ_t`、机器人状态 `q_t` 和带噪动作块 `A_t^τ` 输入 DiT，得到预测向量场：
-   ```text
-   V_θ(φ_t, A_t^τ, q_t)
-   ```
+1. **取真实动作块**：从数据集中采样观测、语言指令、机器人状态和真实动作块 $(\phi_t,q_t,A_t)$ ；
+2. **采样时间步 $\tau$**：从设定的 Beta 分布中采样 flow matching 时间步 $\tau\in[0,1]$ ；
+3. **加噪**：采样高斯噪声 $\epsilon\sim\mathcal{N}(0,I)$ ，构造带噪动作块：
+
+$$
+A_t^\tau=\tau A_t+(1-\tau)\epsilon
+$$
+
+4. **模型预测向量场**：将视觉语言特征 $\phi_t$ 、机器人状态 $q_t$ 和带噪动作块 $A_t^\tau$ 输入 DiT，得到预测向量场：
+
+$$
+V_\theta(\phi_t,A_t^\tau,q_t)
+$$
+
 5. **计算 Flow Matching 损失**：模型目标是拟合从带噪动作到真实动作的 denoising vector field，论文中的损失为：
-   ```text
-   L_fm(θ)=E_τ[|V_θ(φ_t,A_t^τ,q_t)-(ε-A_t)|^2]
-   ```
+
+$$
+\mathcal{L}_{\mathrm{FM}}(\theta)=\mathbb{E}_\tau\left[\left\|V_\theta(\phi_t,A_t^\tau,q_t)-(\epsilon-A_t)\right\|_2^2\right]
+$$
+
 6. **联合优化**：VLM 与 DiT 紧密耦合训练。训练细节中，DiT、视觉编码器和 embodiment-specific adapter 模块会参与训练；语言相关部分保持冻结或基本不更新（LLM主干），以保留预训练 VLM 的语言能力。
 
 **推理流程**：推理时，GR00T N1 从随机噪声动作块开始，通过少量 Euler integration steps 逐步去噪生成动作。
 
-1. **编码观测与语言**：图像和语言输入经过 Eagle-2 VLM，得到视觉语言特征 `φ_t`；
-2. **编码机器人状态**：机器人状态 `q_t` 经过 embodiment-specific State Encoder；
+1. **编码观测与语言**：图像和语言输入经过 Eagle-2 VLM，得到视觉语言特征 $\phi_t$ ；
+2. **编码机器人状态**：机器人状态 $q_t$ 经过 embodiment-specific State Encoder；
 3. **初始化动作噪声**：
-   ```text
-   A_t^0 ~ N(0,I)
-   ```
+
+$$
+A_t^0\sim\mathcal{N}(0,I)
+$$
+
 4. **K 步去噪**：使用 forward Euler integration 更新动作块：
-   ```text
-   A_t^τ + 1/K=A_t^τ+(1)/(K)V_θ(φ_t,A_t^τ,q_t)
-   ```
-5. **输出动作块**：经过 `K` 步后输出长度为 `H=16` 的动作块。论文中发现 `K=4` 在多种 embodiment 上效果较好。
+
+$$
+A_t^{\tau+1/K}=A_t^\tau+\frac{1}{K}V_\theta(\phi_t,A_t^\tau,q_t)
+$$
+
+5. **输出动作块**：经过 $K$ 步后输出长度为 $H=16$ 的动作块。论文中发现 `K=4` 在多种 embodiment 上效果较好。
 
 ---
 
@@ -159,7 +171,7 @@ GR00T N1 的数据策略可以概括为 **Data Pyramid for Robot Foundation Mode
 
 人类视频和 neural trajectories 通常没有真实机器人动作标签。为了解决 action-less data 无法用于 VLA 训练的问题，GR00T N1 使用 latent action learning。
 
-- 使用 VQ-VAE 从视频帧对 `(x_t, x_t+H)` 中学习 latent action `z_t`。
+- 使用 VQ-VAE 从视频帧对 $(x_t,x_{t+H})$ 中学习 latent action $z_t$ 。
   - 编码器根据当前帧和未来帧提取隐式动作表示。
   - 解码器根据当前帧和 latent action 重建未来帧。
 
@@ -319,6 +331,6 @@ GR00T N1 与 `π0` 都属于 **VLM + continuous action generation** 路线，但
 - `π0` 的核心是 **预训练 VLM + Action Expert + Flow Matching**。它在单一 Transformer 框架中引入独立动作专家，让视觉语言 token 与动作 token 在统一自注意力机制中交互。
 - GR00T N1 的核心是 **Dual-System VLA**。它将 VLM 明确作为 System 2，将 DiT action module 明确作为 System 1，并通过 cross-attention 将视觉语言 token 注入动作生成。
 - `π0` 更强调通用机器人控制中的高频连续动作生成和灵巧操作能力；GR00T N1 更强调 humanoid embodiment、跨 embodiment 数据混合、以及 real / simulation / neural / human video 的数据金字塔。
-- 两者都使用 flow matching 和 action chunking，但 GR00T N1 的动作块长度为 `H=16`，推理中通常使用 `K=4` 步去噪；`π0` 则使用更长的动作块（`H=50`）并强调低频规划（2 Hz）、高频执行（50Hz）。
+- 两者都使用 flow matching 和 action chunking，但 GR00T N1 的动作块长度为 $H=16$ ，推理中通常使用 `K=4` 步去噪；`π0` 则使用更长的动作块（ $H=50$ ）并强调低频规划（2 Hz）、高频执行（50Hz）。
 
 > 简单概括：`π0` 是“VLM + Action Expert”的通用机器人控制模型，GR00T N1 是“System 2 VLM + System 1 DiT”的 humanoid robot foundation model。前者更像把动作生成嵌入 VLM 框架，后者更像把 VLM 语义理解和 DiT 动作生成组合成一个快慢系统。

@@ -28,18 +28,18 @@ Qwen-VLA 是一个统一 VLA 模型，由 **Qwen3.5 VLM 主干**和 **DiT-based 
 
 模型将多种具身任务统一写成条件预测形式：
 
-```text
-p_θ(y_t:t+H-1 | o_t, x, e, z)
-```
+$$
+p_\theta(y_{t:t+H-1}\mid o_t,x,e,z)
+$$
 
-其中 `o_t` 是视觉上下文，可以是单帧/多帧图像、视频观测或历史窗口；`x` 是语言指令；`e` 是本体描述 prompt，用于说明机器人平台、控制频率、动作约定和预测 horizon；`z` 是可选任务标识；`y_t:t+H-1` 是未来一段动作或轨迹。
+其中 $o_t$ 是视觉上下文，可以是单帧/多帧图像、视频观测或历史窗口； $x$ 是语言指令； $e$ 是本体描述 prompt，用于说明机器人平台、控制频率、动作约定和预测 horizon； $z$ 是可选任务标识； $y_{t:t+H-1}$ 是未来一段动作或轨迹。
 
 这个目标序列在不同任务中含义不同：
 
-- 对 manipulation，`y` 是未来机器人动作，例如末端执行器位姿、关节位置、夹爪状态或灵巧手关节；
-- 对 navigation，`y` 是未来路经点或相对位移，例如 `(Δ x, Δ y, Δ θ)`；
-- 对 human egocentric data，`y` 是人体或双手的未来运动轨迹，例如 MANO hand pose 或骨架关节轨迹；
-- 对 trajectory-centric 任务，`y` 是对应智能体或周边物体连续坐标空间轨迹。
+- 对 manipulation， $y$ 是未来机器人动作，例如末端执行器位姿、关节位置、夹爪状态或灵巧手关节；
+- 对 navigation， $y$ 是未来路经点或相对位移，例如 $(\Delta x,\Delta y,\Delta\theta)$ ；
+- 对 human egocentric data， $y$ 是人体或双手的未来运动轨迹，例如 MANO hand pose 或骨架关节轨迹；
+- 对 trajectory-centric 任务， $y$ 是对应智能体或周边物体连续坐标空间轨迹。
 
 ##### B. 整体架构
 
@@ -65,19 +65,20 @@ The robot is {robot_tag} with {single arm / dual arms}[, waist][, and mobile bas
 
 Qwen-VLA 统一的是张量接口和 mask 机制，而不是统一物理动作语义。每个样本提供一个目标张量：
 
-```text
-Y ∈ R^H × K
-```
+$$
+Y\in\mathbb{R}^{H\times K}
+$$
 
-其中 `H` 是统一的最大预测 horizon，`K` 是统一的最大通道数。控制信号类型主要包括两类：
+其中 $H$ 是统一的最大预测 horizon， $K$ 是统一的最大通道数。控制信号类型主要包括两类：
 
-- **操作控制信号**：包括末端执行器相对位置 `Δ x, Δ y, Δ z`，末端旋转（欧拉角/四元数），绝对关节位置，夹爪开度，灵巧手关节角度；
-- **导航轨迹信号**：采用 VLN 中常见的 waypoint 表示，每个 waypoint 是 `(Δ x, Δ y, Δ θ)`，表示平面相对位移与航向角变化。
+- **操作控制信号**：包括末端执行器相对位置 $\Delta x,\Delta y,\Delta z$ ，末端旋转（欧拉角/四元数），绝对关节位置，夹爪开度，灵巧手关节角度；
+- **导航轨迹信号**：采用 VLN 中常见的 waypoint 表示，每个 waypoint 是 $(\Delta x,\Delta y,\Delta\theta)$ ，表示平面相对位移与航向角变化。
 
-某个控制模式实际只使用 `c le K` 个通道，模型将有效动作值放在前 `c` 维，其余维度用 0 padding，并使用二值 mask：
-```text
-M ∈ {0,1}^H × K
-```
+某个控制模式实际只使用 $c\le K$ 个通道，模型将有效动作值放在前 $c$ 维，其余维度用 0 padding，并使用二值 mask：
+
+$$
+M\in\{0,1\}^{H\times K}
+$$
 
 mask 标识哪些时间步和通道是有效监督。这样可以避免 padding 位置影响梯度，同时避免为每种机器人单独设计输出 head。
 
@@ -99,39 +100,41 @@ Qwen-VLA 的训练目标由**连续动作生成损失**和**视觉语言损失**
 
 ##### A. Flow Matching 动作损失
 
-对具有连续控制目标的样本，设 clean target 为 `Y_0 ∈ R^H × K`，噪声为 `Y_1 ~ N(0,I)`，线性插值得到带噪动作：
+对具有连续控制目标的样本，设 clean target 为 $Y_0\in\mathbb{R}^{H\times K}$ ，噪声为 $Y_1\sim\mathcal{N}(0,I)$ ，线性插值得到带噪动作：
 
-```text
-Y_τ = (1 - τ)Y_0 + τ Y_1,   τ ∈ [0,1]
-```
+$$
+Y_\tau=(1-\tau)Y_0+\tau Y_1,\qquad \tau\in[0,1]
+$$
 
-为避免补零维度主导梯度，采用逐通道、逐时间步**双层平均损失**。对激活 `c` 个通道、有效时长 `H_task` 的样本，掩码 `M ∈ {0, 1}^H × K` 定义有效区域。对每个有效通道 `k`：
+为避免补零维度主导梯度，采用逐通道、逐时间步**双层平均损失**。对激活 $c$ 个通道、有效时长 $H_{\mathrm{task}}$ 的样本，掩码 $M\in\{0,1\}^{H\times K}$ 定义有效区域。对每个有效通道 $k$ ：
 
-```text
-ℓ_k = frac{sum_h=1^H M_h,k | ( v_θ(Y_τ, τ | o_1:t, x, e, z) - (Y_1 - Y_0) )_h,k |_2^2}{sum_h=1^H M_h,k}
-```
-再对 `c` 个有效通道做均匀平均，得到动作总损失：
+$$
+\ell_k=\frac{\sum_{h=1}^{H}M_{h,k}\left\|\left(v_\theta(Y_\tau,\tau\mid o_{1:t},x,e,z)-(Y_1-Y_0)\right)_{h,k}\right\|_2^2}{\sum_{h=1}^{H}M_{h,k}}
+$$
 
-```text
-L_act = E_τ, Y_0, Y_1 [ (1)/(c) sum_k=0^c-1 ℓ_k ]
-```
+再对 $c$ 个有效通道做均匀平均，得到动作总损失：
+
+$$
+\mathcal{L}_{\mathrm{act}}=\mathbb{E}_{\tau,Y_0,Y_1}\left[\frac{1}{c}\sum_{k=0}^{c-1}\ell_k\right]
+$$
+
 双层平均保证各控制维度梯度贡献均等，完全屏蔽补零位置梯度。
 
 ##### B. 视觉语言损失
 
 为了保留 Qwen3.5 的视觉语言能力，模型同时在辅助 VLM 数据、细粒度具身动作描述、自动驾驶 VQA 和通用 VL 数据上做 next-token prediction：
 
-```text
-L_vl = -sum_i log p_θ(w_i | w_<i, o_1:t)
-```
+$$
+\mathcal{L}_{\mathrm{vl}}=-\sum_i\log p_\theta(w_i\mid w_{<i},o_{1:t})
+$$
 
 最终联合损失为：
 
-```text
-L = λ_actL_act + λ_vlL_vl
-```
+$$
+\mathcal{L}=\lambda_{\mathrm{act}}\mathcal{L}_{\mathrm{act}}+\lambda_{\mathrm{vl}}\mathcal{L}_{\mathrm{vl}}
+$$
 
-其中 `λ_act` 和 `λ_vl` 用于平衡动作监督和视觉语言监督的梯度规模。**每个批次按固定采样比例混合多任务样本**，单次优化**同时更新VLM主干与Action Expert**，融合操控、VLN轨迹、视觉语言三类监督信号。
+其中 $\lambda_{\mathrm{act}}$ 和 $\lambda_{\mathrm{vl}}$ 用于平衡动作监督和视觉语言监督的梯度规模。**每个批次按固定采样比例混合多任务样本**，单次优化**同时更新VLM主干与Action Expert**，融合操控、VLN轨迹、视觉语言三类监督信号。
 
 ##### C. 四阶段训练流程
 
@@ -163,7 +166,7 @@ Qwen-VLA 的训练策略分为四个阶段。这个设计来自一个“动作�
 
 **D. 推理流程**
 
-推理时，模型输入视觉观测、语言指令和 embodiment prompt，由 VLM 产生 hidden states，再由 DiT action decoder 从噪声动作开始，通过少量 Euler integration steps 从 `τ=1` 逐步积分到 `τ=0`，生成一个动作 chunk。不同任务的动作 chunk 长度由 prompt 和训练设置指定，例如仿真 manipulation 常用 `H=16`，VLN waypoint prediction 使用 `H=8`。
+推理时，模型输入视觉观测、语言指令和 embodiment prompt，由 VLM 产生 hidden states，再由 DiT action decoder 从噪声动作开始，通过少量 Euler integration steps 从 $\tau=1$ 逐步积分到 $\tau=0$ ，生成一个动作 chunk。不同任务的动作 chunk 长度由 prompt 和训练设置指定，例如仿真 manipulation 常用 $H=16$ ，VLN waypoint prediction 使用 $H=8$ 。
 
 ---
 
@@ -186,7 +189,7 @@ Qwen-VLA 的预训练混合数据覆盖机器人操作轨迹、人类第一视�
 
 其中机器人操作数据是主体，包含 RobotSet、Galaxea、AgiBot World、RoboCOIN、RoboMIND V1/V2、RDT-1B、DROID、BridgeData V2、RH20T、RT-1、BC-Z 等开源真实机器人数据，累计超10000小时；也包含 InternData-A1、GR00T-X-Embodiment-Sim 等仿真数据。作者还加入了超过 1000 小时的自研真实机器人数据，以及约 8M 条自研合成仿真轨迹。
 
-覆盖的机器人本体包括 WidowX、Google Robot、Franka Panda、ARX5、Fourier GR-1、Mobile ALOHA、AgiBot A2-D、Galaxea R1、AIRBOT MMK2、TienKung 和 Real Human 等。动作类型覆盖 `Δ`EEF + gripper、absolute joint + gripper、absolute joint + dexterous hand、MANO-derived human wrist motion 等。
+覆盖的机器人本体包括 WidowX、Google Robot、Franka Panda、ARX5、Fourier GR-1、Mobile ALOHA、AgiBot A2-D、Galaxea R1、AIRBOT MMK2、TienKung 和 Real Human 等。动作类型覆盖 $\Delta$ EEF + gripper、absolute joint + gripper、absolute joint + dexterous hand、MANO-derived human wrist motion 等。
 
 ##### 核心实验
 

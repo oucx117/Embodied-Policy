@@ -144,7 +144,7 @@ Self-Consistency Training 主要解决的是“模型能不能从一个时间区
 1. 首先，student 根据当前 noisy action $z_t$ 、时间区间 $[t,1]$ 和 observation $o$ ，预测一个 one-step velocity：
 
 $$
-y = u_\theta(z_t,t,1|o)
+y = u_\theta(z_t,t,1\mid o)
 $$
 
    这个 $y$ 会得到一个 one-step action prediction：
