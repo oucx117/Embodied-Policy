@@ -83,25 +83,19 @@ OFP 因此使用 **Self-Consistency Training**。它的核心是：**在同一�
 
 1. OFP 会先采样起点时间 $t$ 和目标时间 $r$ ，满足 $0\le t\le r\le 1$ ，然后在 $[t,r]$ 之间采样一个中间时间 $m$ 。接着用真实动作 $a$ 和噪声 $\epsilon$ 构造：
 
-   $$
-   z_t=(1-t)\epsilon+ta,\quad z_m=(1-m)\epsilon+ma
-   $$
+   $$z_t=(1-t)\epsilon+ta,\quad z_m=(1-m)\epsilon+ma$$
 
    其中 $z_t$ 是起点 noisy action， $z_m$ 是中间 noisy action。
 
 2. 然后，OFP 让 **EMA teacher** 从 $z_m$ 出发，预测从 $m$ 到 $r$ 的平均速度，并得到一个预测终点：
 
-   $$
-   \hat{z}_r=z_m+(r-m)u_{\theta^-}(z_m,m,r|o)
-   $$
+   $$\hat{z}_r=z_m+(r-m)u_{\theta^-}(z_m,m,r|o)$$
 
    这里的 **EMA teacher** 不是外部 teacher，而是当前 student 模型参数的滑动平均版本。它变化更慢，因此输出相对稳定。
 
 3. 有了 $\hat{z}_r$ 后，OFP 用它来构造从 $z_t$ 到 $\hat{z}_r$ 的平均速度目标：
 
-   $$
-   u_{\text{target}}=\frac{\hat{z}_r-z_t}{r-t}
-   $$
+   $$u_{\text{target}}=\frac{\hat{z}_r-z_t}{r-t}$$
 
    然后训练 student 去预测这个目标。
 
@@ -143,15 +137,11 @@ Self-Consistency Training 主要解决的是“模型能不能从一个时间区
 
 1. 首先，student 根据当前 noisy action $z_t$ 、时间区间 $[t,1]$ 和 observation $o$ ，预测一个 one-step velocity：
 
-   $$
-   y = u_\theta(z_t,t,1\mid o)
-   $$
+   $$y = u_\theta(z_t,t,1\mid o)$$
 
    这个 $y$ 会得到一个 one-step action prediction：
 
-   $$
-   \hat a = z_t + (1-t)y
-   $$
+   $$\hat a = z_t + (1-t)y$$
 
    但这个 $\hat a$ 可能还不够精确。于是 OFP 会把 $\hat a$ 重新加噪到某个随机时间 $t'$ ，得到 $\tilde z_{t'}$ 。这样做是因为 **flow model 更擅长在 noisy action space 中估计速度，而不是直接在 clean action 上判断“这个动作该往哪里修正”**。
 
@@ -162,25 +152,19 @@ Self-Consistency Training 主要解决的是“模型能不能从一个时间区
 
    两者的差异就是任务条件带来的修正方向：
 
-   $$
-   g = u_{\theta^-}(\tilde z_{t'},t',t'|o) - u_{\theta^-}(\tilde z_{t'},t',t'|\phi)
-   $$
+   $$g = u_{\theta^-}(\tilde z_{t'},t',t'|o) - u_{\theta^-}(\tilde z_{t'},t',t'|\phi)$$
 
    可以直观理解为：**当前任务相对于普通动作分布，多出来的任务相关修正方向**
 
 3. 然后 OFP 用这个 guidance direction 构造一个 stop-gradient 的 伪目标：
 
-   $$
-   y_{\text{target}}=\text{sg}[y+g]
-   $$
+   $$y_{\text{target}}=\text{sg}[y+g]$$
 
    其中 $\text{sg}[\cdot]$ 表示 stop-gradient，也就是这个 target 只作为监督目标，**不让梯度反传到 EMA teacher 或 target 构造过程**。
 
 4. 最后用 MSE 训练 student：
 
-   $$
-   L_{\text{self-guidance}} = \|y-y_{\text{target}}\|^2
-   $$
+   $$L_{\text{self-guidance}} = \|y-y_{\text{target}}\|^2$$
 
    这个 loss 的效果是：让 student 当前的 one-step velocity $y$ 往 $y+g$ 的方向移动。也就是说，它不是在推理时额外加一个 guidance step，而是在训练时让模型逐渐学会：**以后自己输出的 one-step velocity 就应该包含这种 conditional guidance 修正**。
 
@@ -204,23 +188,17 @@ $$
 
 1. OFP 先将这部分未执行动作前移，并用最后一个动作 $a_H$ 重复补齐长度，得到 warm-start prior：
 
-   $$
-   a_{\text{warm}}=[a_{h+1},...,a_H,\underbrace{a_H,...,a_H}_{h\text{ 次}}]
-   $$
+   $$a_{\text{warm}}=[a_{h+1},...,a_H,\underbrace{a_H,...,a_H}_{h\text{ 次}}]$$
 
 2. 得到 $a_{\text{warm}}$ 后，OFP 不会直接把它当作最终动作，而是把它和高斯噪声混合，构造初始 noisy action：
 
-   $$
-   z_{t_w}=(1-t_w)\epsilon+t_w a_{\text{warm}}
-   $$
+   $$z_{t_w}=(1-t_w)\epsilon+t_w a_{\text{warm}}$$
 
    其中 $t_w\in(0,1]$ 是 warm-start 的噪声水平，也可以理解为“相信上一轮动作先验的程度”。 $t_w$ 越大，越接近 $a_{\text{warm}}$ ； $t_w$ 越小，越接近纯噪声。论文实验中 $t_w$ 是手动设置的超参数，效果最好的是 $t_w=0.15$ ，说明它只加入少量历史动作先验，主要仍保留噪声带来的修正空间。
 
 3. 最后，模型从 $z_{t_w}$ 出发生成新的 action chunk：
 
-   $$
-   \hat a=z_{t_w}+(1-t_w)u_\theta(z_{t_w},t_w,1|o)
-   $$
+   $$\hat a=z_{t_w}+(1-t_w)u_\theta(z_{t_w},t_w,1|o)$$
 
 需要注意的是，Warm-Start 第一次推理时不能用，因为还没有上一轮 action chunk。它主要在第二次及之后的连续 replan 中发挥作用。它本身不需要额外训练，更像一个推理阶段的初始化技巧。
 
@@ -250,29 +228,21 @@ $$
 >
 >    1. 采样时间 $t$ ，并构造加噪动作：
 >
->       $$
->       z_t=(1-t)\epsilon+ta
->       $$
+>       $$z_t=(1-t)\epsilon+ta$$
 >
 >    2. 让 student 在局部速度模式下预测当前位置的速度：
 >
->       $$
->       u_\theta(z_t,t,t|o)
->       $$
+>       $$u_\theta(z_t,t,t|o)$$
 >
 >       这里令目标时间也等于 $t$ ，表示模型预测的是当前时间点附近的局部速度。
 >
 >    3. 使用普通 Flow Matching 的 conditional velocity 作为监督目标：
 >
->       $$
->       a-\epsilon
->       $$
+>       $$a-\epsilon$$
 >
 >       计算：
 >
->       $$
->       L_{flow} = \left\| u_\theta(z_t,t,t|o)-(a-\epsilon) \right\|^2
->       $$
+>       $$L_{flow} = \left\| u_\theta(z_t,t,t|o)-(a-\epsilon) \right\|^2$$
 >
 >       这部分的作用是保留普通 Flow Matching 能力，防止模型只学习跨区间跳跃而偏离专家动作分布。
 >
@@ -280,43 +250,29 @@ $$
 >
 >    1. 采样起点时间 $t$ 、目标时间 $r$ ，满足 $t<r$ ；再根据 Time-Contracting Schedule 在 $[t,r]$ 中采样中间时间 $m$ ：
 >
->       $$
->       m\sim U[t,\;t+(r-t)\rho(s)]
->       $$
+>       $$m\sim U[t,\;t+(r-t)\rho(s)]$$
 >
 >    2. 构造起点和中间点的 noisy action：
 >
->       $$
->       z_t=(1-t)\epsilon+ta
->       $$
+>       $$z_t=(1-t)\epsilon+ta$$
 >
->       $$
->       z_m=(1-m)\epsilon+ma
->       $$
+>       $$z_m=(1-m)\epsilon+ma$$
 >
 >    3. EMA teacher 从 $z_m$ 出发，预测从 $m$ 到 $r$ 的平均速度，并得到预测终点：
 >
->       $$
->       \hat{z}_r = z_m+(r-m)u_{\theta^-}(z_m,m,r|o)
->       $$
+>       $$\hat{z}_r = z_m+(r-m)u_{\theta^-}(z_m,m,r|o)$$
 >
 >    4. 用 teacher 预测的终点构造从 $t$ 到 $r$ 的平均速度目标：
 >
->       $$
->       u_{target} = \frac{\hat{z}_r-z_t}{r-t}
->       $$
+>       $$u_{target} = \frac{\hat{z}_r-z_t}{r-t}$$
 >
 >    5. student 直接从 $z_t$ 预测从 $t$ 到 $r$ 的平均速度：
 >
->       $$
->       u_\theta(z_t,t,r|o)
->       $$
+>       $$u_\theta(z_t,t,r|o)$$
 >
 >       计算：
 >
->       $$
->       L_{self-consistency} = \left\| u_\theta(z_t,t,r|o)-u_{target} \right\|^2
->       $$
+>       $$L_{self-consistency} = \left\| u_\theta(z_t,t,r|o)-u_{target} \right\|^2$$
 >
 >       这部分的作用是让 student 学会：teacher 从中间点 $z_m$ 预测到的终点 $\hat{z}_r$ ，student 从更早的 $z_t$ 出发也应该能直接预测到。也就是让模型学习跨区间的一致平均速度。
 >
@@ -324,61 +280,43 @@ $$
 >
 >    1. student 先做一次 one-step 预测：
 >
->       $$
->       y = u_\theta(z_t,t,1|o)
->       $$
+>       $$y = u_\theta(z_t,t,1|o)$$
 >
 >       得到：
 >
->       $$
->       \hat{a} = z_t + (1-t)y
->       $$
+>       $$\hat{a} = z_t + (1-t)y$$
 >
 >    2. 将 $\hat{a}$ 重新加噪到随机时间 $t'$ ：
 >
->       $$
->       \tilde{z}_{t'}=(1-t')\epsilon'+t'\hat{a}
->       $$
+>       $$\tilde{z}_{t'}=(1-t')\epsilon'+t'\hat{a}$$
 >
 >       这一步是为了把 one-step 结果放回 flow model 熟悉的 noisy action space。
 >
 >    3. EMA teacher 在 $\tilde{z}_{t'}$ 上分别进行 conditional / unconditional 预测：
 >
->       $$
->       u_{\theta^-}(\tilde{z}_{t'},t',t'|o)
->       $$
+>       $$u_{\theta^-}(\tilde{z}_{t'},t',t'|o)$$
 >
->       $$
->       u_{\theta^-}(\tilde{z}_{t'},t',t'|\phi)
->       $$
+>       $$u_{\theta^-}(\tilde{z}_{t'},t',t'|\phi)$$
 >
 >    4. 用二者差异构造 guidance direction：
 >
->       $$
->       g = u_{\theta^-}(\tilde{z}_{t'},t',t'|o) - u_{\theta^-}(\tilde{z}_{t'},t',t'|\phi)
->       $$
+>       $$g = u_{\theta^-}(\tilde{z}_{t'},t',t'|o) - u_{\theta^-}(\tilde{z}_{t'},t',t'|\phi)$$
 >
 >       这里的 $g$ 可以理解为“当前任务条件相对于普通动作分布，多出来的修正方向”。
 >
 >    5. 构造 stop-gradient pseudo target：
 >
->       $$
->       y_{target} = \text{sg}[y+g]
->       $$
+>       $$y_{target} = \text{sg}[y+g]$$
 >
 >    6. student 学习这个 pseudo target，计算：
 >
->       $$
->       L_{self-guidance} = \left\| y-y_{target} \right\|^2
->       $$
+>       $$L_{self-guidance} = \left\| y-y_{target} \right\|^2$$
 >
 >       这部分的作用是让 one-step velocity 往 conditional expert mode 靠近，使一步生成的动作更精确。
 >
 > 总 loss：
 >
-> $$
-> L = L_{flow} + \lambda_c L_{self-consistency} + \lambda_g L_{self-guidance}
-> $$
+> $$L = L_{flow} + \lambda_c L_{self-consistency} + \lambda_g L_{self-guidance}$$
 >
 > 更新 student 模型参数 $\theta$
 >

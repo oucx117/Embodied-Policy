@@ -19,27 +19,19 @@
    >
    > 1. **conditional prediction**：带条件预测，例如在类别 / 文本条件 $c$ 下预测：
    >
-   >    $$
-   >    v_{cond}=v_\theta(z_t,t|c)
-   >    $$
+   >    $$v_{cond}=v_\theta(z_t,t|c)$$
    >
    > 2. **unconditional prediction**：不带条件预测，即去掉条件后的预测：
    >
-   >    $$
-   >    v_{uncond}=v_\theta(z_t,t|\emptyset)
-   >    $$
+   >    $$v_{uncond}=v_\theta(z_t,t|\emptyset)$$
    >
    > 然后用二者差值表示“条件带来的修正方向”：
    >
-   > $$
-   > v_{cond}-v_{uncond}
-   > $$
+   > $$v_{cond}-v_{uncond}$$
    >
    > 最终预测为：
    >
-   > $$
-   > v_{cfg} = v_{uncond} + s\cdot (v_{cond}-v_{uncond})
-   > $$
+   > $$v_{cfg} = v_{uncond} + s\cdot (v_{cond}-v_{uncond})$$
    >
    > 其中 $s$ 是 guidance scale。 $s$ 越大，模型越强调条件约束；但过大可能降低多样性，甚至导致生成失真。
    >
@@ -103,36 +95,26 @@ $$
 <img src="./images/MeanFlow identity.png" alt="MeanFlow identity" style="zoom:33%;" />
 
 > 这个公式来自 average velocity 的定义：
-
-$$
-u(z_t,r,t) = \frac{1}{t-r} \int_r^t v(z_\tau,\tau)d\tau
-$$
-
+>
+> $$u(z_t,r,t) = \frac{1}{t-r} \int_r^t v(z_\tau,\tau)d\tau$$
+>
 > 两边乘上 $(t-r)$ ：
-
-$$
-(t-r)u(z_t,r,t) = \int_r^t v(z_\tau,\tau)d\tau
-$$
-
+>
+> $$(t-r)u(z_t,r,t) = \int_r^t v(z_\tau,\tau)d\tau$$
+>
 > 右边表示：从 $r$ 到 $t$ 这段时间里，沿着生成轨迹累计走过的总位移。
 >
 > 现在对 $t$ 求导。根据“积分上限求导”：
-
-$$
-\frac{d}{dt} \int_r^t v(z_\tau,\tau)d\tau = v(z_t,t)
-$$
-
+>
+> $$\frac{d}{dt} \int_r^t v(z_\tau,\tau)d\tau = v(z_t,t)$$
+>
 > 左边对 $(t-r)u(z_t,r,t)$ 求导，用乘法法则：
-
-$$
-\frac{d}{dt} \left[ (t-r)u(z_t,r,t) \right] = u(z_t,r,t) + (t-r)\frac{d}{dt}u(z_t,r,t)
-$$
-
+>
+> $$\frac{d}{dt} \left[ (t-r)u(z_t,r,t) \right] = u(z_t,r,t) + (t-r)\frac{d}{dt}u(z_t,r,t)$$
+>
 > 所以得到：
-
-$$
-v(z_t,t) = u(z_t,r,t) + (t-r)\frac{d}{dt}u(z_t,r,t)
-$$
+>
+> $$v(z_t,t) = u(z_t,r,t) + (t-r)\frac{d}{dt}u(z_t,r,t)$$
 
 iMF 用网络 $u_\theta$ 预测 average velocity，并通过 JVP 近似 $\frac{d}{dt}u_\theta$ ，得到复合函数：
 
@@ -141,11 +123,9 @@ V_\theta(z_t) = u_\theta(z_t,r,t) + (t-r)\mathrm{JVP}_{sg}(u_\theta; v_\theta)
 $$
 
 > JVP 就是 iMF 用来计算 $\frac{d}{dt}u_\theta$ 的自动微分操作：
-
-$$
-\mathrm{JVP}(u_θ;v_θ)=\frac{∂u_θ}{∂z_t}v_θ+\frac{∂u_θ}{∂t}
-$$
-
+>
+> $$\mathrm{JVP}(u_θ;v_θ)=\frac{∂u_θ}{∂z_t}v_θ+\frac{∂u_θ}{∂t}$$
+>
 > 它表示 average velocity 随当前时间和当前位置变化的趋势。
 
 然后用 $V_\theta$ 去拟合标准 Flow Matching 的速度目标：
@@ -171,11 +151,8 @@ $$
 这样 JVP 的方向**只依赖当前 noisy state $z_t$**，更接近模型推理时真正使用的速度场，也更稳定。
 
 > $v_\theta(z_t,t)$ 可以通过 boundary condition 得到：
-
-$$
-v_\theta(z_t,t)=u_\theta(z_t,t,t)
-$$
-
+>
+> $$v_\theta(z_t,t)=u_\theta(z_t,t,t)$$
 >
 > 也就是说，当目标时间 $r$ 等于当前时间 $t$ 时，区间长度趋近于 0，average velocity 就退化成 instantaneous velocity。
 
@@ -298,27 +275,19 @@ iMF 推理时非常简单，因为网络已经学会了 average velocity。对�
 
 1. 从噪声分布采样：
 
-   $$
-   z_1\sim \mathcal{N}(0,I)
-   $$
+   $$z_1\sim \mathcal{N}(0,I)$$
 
 2. 设置目标区间：
 
-   $$
-   r=0,\quad t=1
-   $$
+   $$r=0,\quad t=1$$
 
 3. 网络预测从 $t=1$ 到 $r=0$ 的 average velocity：
 
-   $$
-   u_\theta(z_1,0,1)
-   $$
+   $$u_\theta(z_1,0,1)$$
 
 4. 一步生成数据：
 
-   $$
-   z_0=z_1-u_\theta(z_1,0,1)
-   $$
+   $$z_0=z_1-u_\theta(z_1,0,1)$$
 
 > 这里符号方向与论文中的时间约定有关：论文采用 $z_t=(1-t)x+te$ ，所以 $t=1$ 是噪声， $t=0$ 是数据。从 $t=1$ 走到 $r=0$ ，就是从噪声生成数据。
 
@@ -340,33 +309,23 @@ iMF 最值得迁移的思路是：**用 iMF-style objective 训练 1-step action
 
 > 把图像生成中的数据 $x$ 换成 Fast-WAM 的 action chunk $a$ ，把噪声 $e$ 换成 action noise $\epsilon$ ：
 >
-> $$
-> z_t=(1-t)a+t\epsilon
-> $$
+> $$z_t=(1-t)a+t\epsilon$$
 >
 > 让 action expert 输出 average velocity：
 >
-> $$
-> u_\theta(z_t,r,t \mid \text{world context})
-> $$
+> $$u_\theta(z_t,r,t \mid \text{world context})$$
 >
 > 再构造：
 >
-> $$
-> V_\theta = u_\theta + (t-r)\mathrm{JVP}_{sg}(u_\theta;v_\theta)
-> $$
+> $$V_\theta = u_\theta + (t-r)\mathrm{JVP}_{sg}(u_\theta;v_\theta)$$
 >
 > 并用：
 >
-> $$
-> \epsilon-a
-> $$
+> $$\epsilon-a$$
 >
 > 作为 velocity target：
 >
-> $$
-> L = \left\| V_\theta-(\epsilon-a) \right\|^2
-> $$
+> $$L = \left\| V_\theta-(\epsilon-a) \right\|^2$$
 >
 > 这样 action expert 不只是学习局部 velocity，而是学习在给定 world context 下，从 noisy action 一步跳到 clean action 所需的区间平均速度。
 
