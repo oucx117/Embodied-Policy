@@ -77,6 +77,7 @@
 | 2026.4 | [π0.7](./VLA/π系列/π07.md) | [Technical Report](https://www.pi.website/download/pi07.pdf) | 多模态提示：从异质数据中学习可操纵的组合泛化策略 |
 | 2026.5 | [Qwen-VLA](./VLA/Qwen-VLA/Qwen-VLA.md) | [2605.30280](https://arxiv.org/abs/2605.30280) | 统一动作轨迹空间：覆盖操作、导航和人类第一视角任务 |
 | 2026.6 | [Qwen-RobotManip](./VLA/Qwen-RobotManip/Qwen-RobotManip.md) | [2606.17846](https://arxiv.org/abs/2606.17846) | 对齐后扩展：统一跨本体、坐标系和行为分布的数据 |
+| 2026.7 | [Xiaomi-Robotics-1](./VLA/Xiaomi-Robotics系列/Xiaomi-Robotics-1.md) | [2607.15330](https://arxiv.org/abs/2607.15330) | 规模化 UMI 预训练：用超 10 万小时真实轨迹学习通用操作先验 |
 
 <a id="wam"></a>
 
