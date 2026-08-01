@@ -6,7 +6,7 @@
 
 ### 一. 概述
 
-<img src="./images/1-overview.png" alt="1-overview" width="35%" />
+<img src="./images/1-overview.png" alt="1-overview" width="70%" />
 
 **研究动机**：VLA 的规模化受制于真实机器人数据。传统遥操作依赖固定机器人平台，成本高、场景覆盖窄且数据冗余，难以复现 LLM/VLM 的 Scaling 路线。
 
@@ -97,7 +97,7 @@ $$
 
 UMI 是带第一视角相机的便携式手持夹爪，不要求采集现场部署完整机器人。数据覆盖家庭、办公室、工业、餐饮、商业和户外场景。
 
-<img src="./images/1-pretrain.png" alt="预训练数据" width="33%" />
+<img src="./images/1-pretrain.png" alt="预训练数据" width="60%" />
 
 **自动语言标注流程**：
 
@@ -125,7 +125,7 @@ $$
 
 #### 2. Post-training：对齐机器人本体与指令
 
-<img src="./images/1-posttrain.png" alt="后训练数据" width="33%" />
+<img src="./images/1-posttrain.png" alt="后训练数据" width="70%" />
 
 Post-training 解决两个差异：
 
@@ -167,7 +167,7 @@ Choice Policies 的动作和分数不负责最终控制；推理动作由 DiT �
 
 **结果**：
 
-<img src="./images/1-scaling.png" alt="预训练 Scaling 结果" width="33%" />
+<img src="./images/1-scaling.png" alt="预训练 Scaling 结果" width="70%" />
 
 **结论**：验证集动作误差随数据量和模型量增加而下降，且主要瓶颈更偏向数据规模与多样性。
 
@@ -177,7 +177,7 @@ Choice Policies 的动作和分数不负责最终控制；推理动作由 DiT �
 
 **结果**：
 
-<img src="./images/1-outofbox.png" alt="1-outofbox" width="33%" />
+<img src="./images/1-outofbox.png" alt="1-outofbox" width="80%" />
 
 **结论**：随着 UMI 预训练数据和模型规模增大，模型在未见环境和物体上的成功率持续提升，说明预训练获得的操作先验能有效迁移到真实机器人。其中数据扩展的收益比模型扩展更显著。
 
@@ -187,7 +187,7 @@ Choice Policies 的动作和分数不负责最终控制；推理动作由 DiT �
 
 **结果**：
 
-<img src="./images/1-real.png" alt="真实机器人迁移与微调结果" width="50%" />
+<img src="./images/1-real.png" alt="真实机器人迁移与微调结果" width="70%" />
 
 **结论**：Xiaomi-Robotics-1 在低数据条件下优势更明显，说明大规模 UMI Pre-training 提供了可迁移的操作先验。
 

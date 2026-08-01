@@ -150,7 +150,7 @@ clean prefix 能连接新旧 chunk，但也可能使模型只复制前序动作�
 
 - **Λ-shape attention mask**：邻近 prefix 的动作可关注 prefix，保证平滑；较远动作不能关注 prefix，迫使模型重新依赖视觉、语言和状态；
 
-  <img src="./images/0-mask.png" alt="0-mask" width="33%" />
+  <img src="./images/0-mask.png" alt="0-mask" width="80%" />
 
 - **Adaptive loss re-weighting**：根据 online prediction 与 ground truth 的 $L_1$ 误差提高偏差较大样本的权重，让模型重点学习：当执行状态已经偏离演示轨迹时，如何纠正明显错误并回到合理动作。
 
@@ -209,11 +209,11 @@ clean prefix 能连接新旧 chunk，但也可能使模型只复制前序动作�
 
 **LIBERO**
 
-<img src="./images/0-LIBERO.png" alt="0-LIBERO" width="40%" />
+<img src="./images/0-LIBERO.png" alt="0-LIBERO" width="70%" />
 
 **CALVIN**
 
-<img src="./images/0-CALVIN.png" alt="0-CALVIN" width="33%" />
+<img src="./images/0-CALVIN.png" alt="0-CALVIN" width="70%" />
 
 * ABCD $\rightarrow$ D 表示在 A、B、C、D 上训练，在 D 上测试；ABC $\rightarrow$ D 表示只在 A、B、C 上训练，在未见过的 D 上测试。
 * `Tasks Completed in a Row` 的 `1、2、3、4、5` 表示成功连续完成至少 $k$ 个任务的比例。
