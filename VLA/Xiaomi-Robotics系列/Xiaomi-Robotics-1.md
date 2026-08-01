@@ -55,17 +55,19 @@ $$
 DiT 学习预测将噪声动作输运到真实动作的速度场：
 
 $$
+\begin{aligned}
 \mathcal L_{\mathrm{Flow}}(\theta)
-=\left\|
+&=\left\|
 v_{\theta}(o_t,l,s_t,\tilde a_{t:t+H}^{\tau},\tau)
-- (a_{t:t+H} - \epsilon)
+{}-(a_{t:t+H}-\epsilon)
 \right\|_2^2.
+\end{aligned}
 $$
 
 时间步采用偏向低噪声区域的 Beta 采样：
 
 $$
-u\sim\operatorname{Beta}(1.5,1),\qquad
+u\sim\mathrm{Beta}(1.5,1),\qquad
 \tau=(1-u)\times0.999\in[0,0.999].
 $$
 
