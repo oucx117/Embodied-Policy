@@ -15,8 +15,7 @@
 
 $$
 \text{UCA-Flow}
-=
-\text{iMF-style MeanFlow objective}
+=\text{iMF-style MeanFlow objective}
 +
 \text{Dual-Pass Supervision}
 +
@@ -122,8 +121,7 @@ $$
 
 $$
 [P_{t,h,o}^{\ell+1},Y^{\ell+1}]
-=
-\mathrm{UCA\text{-}Transformer}^{\ell}
+=\mathrm{UCA\text{-}Transformer}^{\ell}
 ([P_{t,h,o}^{\ell},Y^\ell]).
 $$
 
@@ -153,8 +151,7 @@ UCA-Flow 使用 $h=t-r$ 表示生成区间。沿着固定 $r$ 的 probability pa
 
 $$
 D_tu_\theta
-=
-\nabla_z u_\theta\cdot\mathrm{sg}(v_\theta)
+=\nabla_z u_\theta\cdot\mathrm{sg}(v_\theta)
 +
 \partial_tu_\theta
 +
@@ -188,8 +185,7 @@ UCA-Flow 在每个训练样本上做两次模型前向：
 
 $$
 \mathcal{L}
-=
-\rho\!\left(V_\theta-\mathrm{sg}(v)\right)
+=\rho\!\left(V_\theta-\mathrm{sg}(v)\right)
 +
 \rho\!\left(v_\theta-\mathrm{sg}(v)\right).
 $$
@@ -198,8 +194,7 @@ $$
 
 $$
 \rho(\Delta)
-=
-\mathrm{sg}\!\left(
+=\mathrm{sg}\!\left(
 \frac{1}{(\lVert\Delta\rVert_2^2+c)^{1-\gamma}}
 \right)
 \lVert\Delta\rVert_2^2.
