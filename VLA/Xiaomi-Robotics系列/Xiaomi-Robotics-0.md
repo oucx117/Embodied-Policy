@@ -192,10 +192,10 @@ clean prefix 能连接新旧 chunk，但也可能使模型只复制前序动作�
 模型：               └── 推理新 chunk
 ```
 
-新推理使用当前 chunk 从 $T_e$ 到 $T_e+\Delta t_c-1$ 的动作作为 clean prefix。推理完成后：
+新推理使用当前 chunk 从 $T_e$ 到 $T_e+\Delta t_c-1$ 的动作作为 clean prefix。假设机器人继续执行了 $\Delta t_{\mathrm{inf}}$ 步。推理完成后：
 
 - 从新 chunk 的第 $\Delta t_{\mathrm{inf}}$ 步开始执行；
-- 设置 $\Delta t_c\geq\Delta t_{\mathrm{inf}}$ ，确保 prefix 覆盖整个推理窗口，从而推理期间始终有已确定动作可执行。
+- 设置 $\Delta t_c\geq\Delta t_{\mathrm{inf}}$ ，确保之后切换到新 chunk 时衔接平滑。
 
 因此，已经在推理期间执行过的 prefix 不会重复执行，机器人直接从时间对齐的位置接入新 chunk。
 
