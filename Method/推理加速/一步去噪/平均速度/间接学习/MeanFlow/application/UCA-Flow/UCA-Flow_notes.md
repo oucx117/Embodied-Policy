@@ -86,8 +86,8 @@ $$
 **Timestep / interval tokens**：分别用 sinusoidal positional embedding 和独立 MLP 编码 $t$ 与 $h$ ：
 
 $$
-e_t=\phi_t(\operatorname{PE}(t)),\qquad
-e_h=\phi_h(\operatorname{PE}(h)).
+e_t=\phi_t(\mathrm{PE}(t)),\qquad
+e_h=\phi_h(\mathrm{PE}(h)).
 $$
 
 为了提高表示容量，论文允许复制成 $N_t$ 个 timestep tokens 和 $N_h$ 个 interval tokens，并为不同 token 加入可学习身份偏置：
@@ -123,7 +123,7 @@ $$
 $$
 [P_{t,h,o}^{\ell+1},Y^{\ell+1}]
 =
-\operatorname{UCA-Transformer}^{\ell}
+\mathrm{UCA\text{-}Transformer}^{\ell}
 ([P_{t,h,o}^{\ell},Y^\ell]).
 $$
 
@@ -154,7 +154,7 @@ UCA-Flow 使用 $h=t-r$ 表示生成区间。沿着固定 $r$ 的 probability pa
 $$
 D_tu_\theta
 =
-\nabla_z u_\theta\cdot\operatorname{sg}(v_\theta)
+\nabla_z u_\theta\cdot\mathrm{sg}(v_\theta)
 +
 \partial_tu_\theta
 +
@@ -167,12 +167,12 @@ $$
 v_\theta=u_\theta(z_t,t,0,o)
 $$
 
-近似 instantaneous velocity，并作为 JVP 的 state direction。换成传统 iMF 的 $(z_t,r,t)$ 坐标后，同一导数对应 tangent direction $(\operatorname{sg}(v_\theta),0,1)$ ；在 UCA-Flow 的 $(z_t,t,h)$ 坐标中则对应 $(\operatorname{sg}(v_\theta),1,1)$ 。
+近似 instantaneous velocity，并作为 JVP 的 state direction。换成传统 iMF 的 $(z_t,r,t)$ 坐标后，同一导数对应 tangent direction $(\mathrm{sg}(v_\theta),0,1)$ ；在 UCA-Flow 的 $(z_t,t,h)$ 坐标中则对应 $(\mathrm{sg}(v_\theta),1,1)$ 。
 
 基于 MeanFlow identity，构造 compound velocity：
 
 $$
-V_\theta=u_\theta+h\operatorname{sg}(D_tu_\theta).
+V_\theta=u_\theta+h\mathrm{sg}(D_tu_\theta).
 $$
 
 这一步体现了 iMF 的核心：**网络输出的是 average velocity $u_\theta$ ，但训练在已知的 instantaneous velocity target $v=\epsilon-x$ 上完成。**
@@ -189,9 +189,9 @@ UCA-Flow 在每个训练样本上做两次模型前向：
 $$
 \mathcal{L}
 =
-\rho\!\left(V_\theta-\operatorname{sg}(v)\right)
+\rho\!\left(V_\theta-\mathrm{sg}(v)\right)
 +
-\rho\!\left(v_\theta-\operatorname{sg}(v)\right).
+\rho\!\left(v_\theta-\mathrm{sg}(v)\right).
 $$
 
 其中 adaptive weighted L2 loss 定义为：
@@ -199,7 +199,7 @@ $$
 $$
 \rho(\Delta)
 =
-\operatorname{sg}\!\left(
+\mathrm{sg}\!\left(
 \frac{1}{(\lVert\Delta\rVert_2^2+c)^{1-\gamma}}
 \right)
 \lVert\Delta\rVert_2^2.
@@ -263,10 +263,10 @@ $$
    u_\theta=u_\theta(z_t,t,h,o).
    $$
 
-6. 以 $\operatorname{sg}(v_\theta)$ 为 state tangent，通过 JVP 计算 $D_tu_\theta$ ，再得到：
+6. 以 $\mathrm{sg}(v_\theta)$ 为 state tangent，通过 JVP 计算 $D_tu_\theta$ ，再得到：
 
    $$
-   V_\theta=u_\theta+h\operatorname{sg}(D_tu_\theta).
+   V_\theta=u_\theta+h\mathrm{sg}(D_tu_\theta).
    $$
 
 7. 计算 Dual-Pass loss：
@@ -286,7 +286,7 @@ $$
 - 真实机器人 prediction horizon 为 16，observation stride 为 2，每个任务训练 300 epochs；
 - 仿真训练使用单张 NVIDIA RTX A5000。
 
-论文只说明采样 $t\ge r$ 。官方代码进一步采用 Logit-Normal 时间采样：先独立采样两个 $\operatorname{LogitNormal}(-0.4,1.0)$ 变量，再取最大值为 $t$ 、最小值为 $r$ ；Dual-Pass 版本的 finite-interval branch 默认不额外令 $r=t$ ，因为 $h=0$ 的 instantaneous branch 已在每个样本上单独计算。
+论文只说明采样 $t\ge r$ 。官方代码进一步采用 Logit-Normal 时间采样：先独立采样两个 $\mathrm{LogitNormal}(-0.4,1.0)$ 变量，再取最大值为 $t$ 、最小值为 $r$ ；Dual-Pass 版本的 finite-interval branch 默认不额外令 $r=t$ ，因为 $h=0$ 的 instantaneous branch 已在每个样本上单独计算。
 
 > 训练成本高于普通单前向回归：每个样本需要 instantaneous pass、average pass 和 JVP。论文未报告训练吞吐、显存占用或相对训练成本；低延迟优势针对 inference。
 
