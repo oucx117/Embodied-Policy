@@ -46,9 +46,7 @@ $$
 - $t=1$ 时， $z_1=\epsilon$ ；
 - 路径的 conditional instantaneous velocity 为：
 
-  $$
-  v=\frac{dz_t}{dt}=\epsilon-x.
-  $$
+  $$v=\frac{dz_t}{dt}=\epsilon-x.$$
 
 设目标时间为 $r\le t$ ，区间长度为：
 
@@ -242,33 +240,23 @@ $$
 2. 采样 expert action $x$ 、Gaussian noise $\epsilon$ 和满足 $t\ge r$ 的时间对，令 $h=t-r$ 。
 3. 构造 noisy action 与 Flow Matching target：
 
-   $$
-   z_t=(1-t)x+t\epsilon,\qquad v=\epsilon-x.
-   $$
+   $$z_t=(1-t)x+t\epsilon,\qquad v=\epsilon-x.$$
 
 4. 进行 instantaneous pass：
 
-   $$
-   v_\theta=u_\theta(z_t,t,0,o).
-   $$
+   $$v_\theta=u_\theta(z_t,t,0,o).$$
 
 5. 进行 average pass：
 
-   $$
-   u_\theta=u_\theta(z_t,t,h,o).
-   $$
+   $$u_\theta=u_\theta(z_t,t,h,o).$$
 
 6. 以 $\mathrm{sg}(v_\theta)$ 为 state tangent，通过 JVP 计算 $D_tu_\theta$ ，再得到：
 
-   $$
-   V_\theta=u_\theta+h\mathrm{sg}(D_tu_\theta).
-   $$
+   $$V_\theta=u_\theta+h\mathrm{sg}(D_tu_\theta).$$
 
 7. 计算 Dual-Pass loss：
 
-   $$
-   \mathcal{L}=\rho(V_\theta-v)+\rho(v_\theta-v),
-   $$
+   $$\mathcal{L}=\rho(V_\theta-v)+\rho(v_\theta-v),$$
 
    并更新 observation encoder、Unified Condition-Action Transformer 和输出 head。
 
@@ -292,27 +280,19 @@ UCA-Flow 推理时不使用 Dual-Pass loss，也不计算 JVP，只保留一次 
 1. 获取当前 observation history $o$ ，编码 point cloud 和 robot state；
 2. 在归一化 action space 中采样：
 
-   $$
-   z_1=\epsilon,\qquad \epsilon\sim\mathcal{N}(0,I).
-   $$
+   $$z_1=\epsilon,\qquad \epsilon\sim\mathcal{N}(0,I).$$
 
 3. 设置完整生成区间：
 
-   $$
-   t=1,\qquad h=1.
-   $$
+   $$t=1,\qquad h=1.$$
 
 4. 将 observation、 $t$ 、 $h$ 和 $z_1$ token 化后，用 Unified Condition-Action Transformer 预测：
 
-   $$
-   u_\theta(z_1,1,1,o).
-   $$
+   $$u_\theta(z_1,1,1,o).$$
 
 5. 一步生成 clean action trajectory：
 
-   $$
-   \hat{x}=z_1-u_\theta(z_1,1,1,o).
-   $$
+   $$\hat{x}=z_1-u_\theta(z_1,1,1,o).$$
 
 6. 将 $\hat{x}$ 反归一化为机器人控制命令，并在 receding-horizon control 中执行相应 action chunk，随后根据新 observation 再次规划。
 
