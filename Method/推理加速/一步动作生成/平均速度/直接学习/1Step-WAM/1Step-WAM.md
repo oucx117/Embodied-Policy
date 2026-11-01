@@ -25,9 +25,11 @@
 可以把去噪理解为“从噪声位置走到动作终点”。如果沿途方向变化不大，那么起步时预测的速度就已经包含了主要运动方向，可以用它直接估计终点。
 
 论文的去噪时间从 $t=1$ 减小到 $t=0$ ，所以一步预测为：
+
 $$
 \hat a_0=x_1-v_1.
 $$
+
 其中 $x_1$ 是初始噪声， $v_1$ 是首步速度，减号来自时间向后移动。
 
 但轨迹只是近似直线，原模型的首步预测也存在误差。因此，直接一步生成仍可能不够精确，需要训练 calibration head 修正首步速度。
@@ -68,6 +70,7 @@ $$
 操作顺序为：**逐关节沿 horizon 做 DCT (左乘 $C$ ) → 保留前 $K$ 项、其余置零 (左乘 $M_K$ ) → inverse DCT (左乘 $C^\top$ )**。它处理的是动作时间轴上的频率，不是对关节维度做变换；gripper 输出保持不变，chunk 长度也保持不变。
 
 > **低通何时有用？** 设同条件、同初始噪声下的教师连续动作为 $A_c^T$ ，预测误差为 $E_c=\hat A_c-A_c^T$ 。投影后的教师匹配误差分解为：
+>
 > $$
 > R_K
 > =\mathbb E\lVert A_c^{\mathrm{exec}} - A_c^T\rVert_F^2
@@ -122,9 +125,7 @@ $$
 4. calibration head 预测 $\Delta v$ ，构造一步动作 $\hat a_0=x_1-v_1-\Delta v$ 。
 5. 最小化动作空间 MSE，仅更新 $\phi$ ：
 
-   $$
-   \mathcal L(\phi)=\mathbb E\left[\lVert\hat a_0-a_{\mathrm{tea}}\rVert_2^2\right].
-   $$
+   $$\mathcal L(\phi)=\mathbb E\left[\lVert\hat a_0-a_{\mathrm{tea}}\rVert_2^2\right].$$
 
 > **DCT 不参与训练损失**：训练拟合完整频带的教师动作，固定低通投影仅在推理时应用。
 

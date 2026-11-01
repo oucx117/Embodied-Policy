@@ -17,7 +17,7 @@
 
 $$
 z(o,l)=F_{\psi}^{\mathrm{KV}}(o,l)
-=\left\{(K_i^v,V_i^v)\right\}_{i=1}^{N}.
+=\left\lbrace(K_i^v,V_i^v)\right\rbrace_{i=1}^{N}.
 $$
 
 其中 $N$ 是 transformer blocks 的数量， $K_i^v,V_i^v$ 是第 $i$ 个视频 block 产生的 key/value。Action Expert 通过 attention 消费这些条件，原模型多次预测瞬时速度，再数值积分得到动作。
@@ -43,20 +43,21 @@ f_{\theta}(a_t,t)=a_t-tv_{\theta}(a_t,t).
 $$
 
 **局部一致性的不足**：普通一致性蒸馏先让 teacher 从 $t$ 局部更新到相邻的 $s<t$ ，得到 $\tilde a_s$ ，再要求 student 与 EMA 从这两个起点预测的终点一致：
+
 $$
 \mathcal L_{\mathrm{CD}}
 =\mathbb E\left[
-\left\|f_{\theta_{\mathrm S}}(a_t,t)
--\operatorname{sg}\left[f_{\theta_{\mathrm{ema}}}(\tilde a_s,s)\right]\right\|_2^2
+\left\Vert f_{\theta_{\mathrm S}}(a_t,t)
+-\mathop{\mathrm{sg}}\nolimits\left[f_{\theta_{\mathrm{ema}}}(\tilde a_s,s)\right]\right\Vert_2^2
 \right].
 $$
 
-$\operatorname{sg}$ 表示 stop-gradient。但**两个预测彼此一致，不代表它们已经接近准确终点**：student 与 EMA 仍可能一起偏离教师终点，这就是本文关注的 local-global error gap。
+$\mathop{\mathrm{sg}}\nolimits$ 表示 stop-gradient。但**两个预测彼此一致，不代表它们已经接近准确终点**：student 与 EMA 仍可能一起偏离教师终点，这就是本文关注的 local-global error gap。
 
 **教师终点监督**：从相同的 $a_t$ 、相同条件出发，让 frozen teacher 用 $K$ 步 rollout 积分到 $0$ ，得到教师终点及对应区间平均速度：
 
 $$
-a_0^{\mathrm T}=\operatorname{Solver}(a_t,t,0;\theta_{\mathrm T}),
+a_0^{\mathrm T}=\mathop{\mathrm{Solver}}\nolimits(a_t,t,0;\theta_{\mathrm T}),
 \qquad
 u_{\theta_{\mathrm T}}(a_t,t)=\frac{a_t-a_0^{\mathrm T}}{t},
 \quad t>0.
@@ -67,8 +68,8 @@ $$
 $$
 \mathcal L_{\mathrm{TA}}
 =\mathbb E\left[
-\left\|v_{\theta_{\mathrm S}}(a_t,t)
--\operatorname{sg}\left[u_{\theta_{\mathrm T}}(a_t,t)\right]\right\|_2^2
+\left\Vert v_{\theta_{\mathrm S}}(a_t,t)
+-\mathop{\mathrm{sg}}\nolimits\left[u_{\theta_{\mathrm T}}(a_t,t)\right]\right\Vert_2^2
 \right],
 \qquad
 \mathcal L=\mathcal L_{\mathrm{CD}}+\lambda\mathcal L_{\mathrm{TA}}.
@@ -80,10 +81,10 @@ CD 约束“邻近起点预测一致”，TA 则提供“最终应该落在哪�
 
 ![传统串行调度与 CEWP 对比，原文 Figure 4](./images/cewp.png)
 
-把第 $i$ 个 block 拆为 Q/K/V projection $\mathcal P_i$ 、attention $\operatorname{Attn}_i$ 和其余计算 $\mathcal R_i$ 。动作 block 的 attention 将视频 KV 与自身 KV 沿 token 维拼接：
+把第 $i$ 个 block 拆为 Q/K/V projection $\mathcal P_i$ 、attention $\mathop{\mathrm{Attn}}\nolimits_i$ 和其余计算 $\mathcal R_i$ 。动作 block 的 attention 将视频 KV 与自身 KV 沿 token 维拼接：
 
 $$
-\operatorname{Attn}_i^a\left(
+\mathop{\mathrm{Attn}}\nolimits_i^a\left(
 Q_i^a,[K_i^v;K_i^a],[V_i^v;V_i^a]
 \right).
 $$
@@ -91,7 +92,7 @@ $$
 它真正需要满足的依赖是：
 
 $$
-\mathcal P_i^v\longrightarrow\operatorname{Attn}_i^a
+\mathcal P_i^v\longrightarrow\mathop{\mathrm{Attn}}\nolimits_i^a
 \longleftarrow\mathcal P_i^a.
 $$
 
@@ -146,9 +147,7 @@ CEWP 使用两个 non-blocking CUDA streams：视频流准备好 KV 后记录 ev
 3. 用 CEWP 重叠 Video Expert 和 student Action Expert 的一次 forward；视频条件逐个就绪，动作层按需消费。
 4. student 预测区间平均速度，一步得到完整动作 chunk：
 
-   $$
-   \hat a_0=\epsilon-v_{\theta_{\mathrm S}}(\epsilon,1\mid z(o,l)).
-   $$
+   $$\hat a_0=\epsilon-v_{\theta_{\mathrm S}}(\epsilon,1\mid z(o,l)).$$
 
 5. 按基座策略后处理并执行动作，再获取观测进行下一次规划。
 
